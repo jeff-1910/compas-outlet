@@ -1,0 +1,8 @@
+# Archivos que crea Windows y no hacen falta en el sitio
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Archivos temporales
+*.tmp
+_previsualizacion.html

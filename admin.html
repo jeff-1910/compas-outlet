@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Administrar catálogo | Compas Outlet</title>
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23ffffff'/%3E%3Crect x='10' y='38' width='33' height='26' rx='9' fill='%23ce1126'/%3E%3Crect x='57' y='38' width='33' height='26' rx='9' fill='%230f2a66'/%3E%3Cg stroke='%23ce1126' stroke-width='5' stroke-linecap='round'%3E%3Cpath d='M50 20 v9 M50 80 v-9'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+  .admin { display: grid; grid-template-columns: 380px 1fr; gap: 22px; align-items: start; }
+  @media (max-width: 940px) { .admin { grid-template-columns: 1fr; } }
+
+  /* Sin esto, el ancho natural de los campos ensancha la columna y
+     aparece scroll horizontal en pantallas angostas. */
+  .admin > *, .dos > * { min-width: 0; }
+  .campo input, .campo select, .campo textarea { min-width: 0; max-width: 100%; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .panel h2 { margin: 0 0 4px; font-size: 18px; }
+  .panel > p.sub { margin: 0 0 18px; font-size: 13.5px; color: var(--text-muted); }
+
+  .campo { margin-bottom: 14px; }
+  .campo label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+  .campo .pista { font-weight: 400; color: var(--text-muted); font-size: 12px; }
+  .campo input[type=text], .campo input[type=number], .campo textarea, .campo select {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+  }
+  .campo textarea { resize: vertical; min-height: 74px; }
+  .campo input:focus, .campo textarea:focus, .campo select:focus {
+    outline: 2px solid var(--rojo); outline-offset: -1px; background: var(--surface);
+  }
+  .dos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .check { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 16px; }
+  .check input { accent-color: var(--rojo); width: 16px; height: 16px; }
+
+  .previa {
+    width: 100%; aspect-ratio: 16/9;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    display: grid; place-items: center;
+    overflow: hidden;
+    margin-bottom: 8px;
+    font-size: 12.5px; color: var(--text-muted);
+    text-align: center; padding: 10px;
+  }
+  .previa img { width: 100%; height: 100%; object-fit: contain; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { padding: 9px 8px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .7px; color: var(--text-muted); }
+  tbody tr:hover { background: var(--surface-2); }
+  .mini {
+    width: 40px; height: 40px; border-radius: 8px;
+    background: var(--surface-2); display: grid; place-items: center;
+    overflow: hidden; font-size: 18px;
+  }
+  .mini img { width: 100%; height: 100%; object-fit: cover; }
+  .acc { display: flex; gap: 6px; }
+  .acc button {
+    border: 1px solid var(--border); background: var(--bg); color: var(--text);
+    border-radius: 6px; padding: 4px 9px; font-size: 12.5px;
+  }
+  .acc button:hover { background: var(--surface-2); }
+  .acc .borrar:hover { background: var(--red); color: #fff; border-color: var(--red); }
+
+  .aviso {
+    background: var(--rojo-suave);
+    border: 1px solid var(--rojo);
+    border-radius: var(--radius-sm);
+    padding: 13px 15px;
+    font-size: 13.5px;
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+  .aviso strong { display: block; margin-bottom: 3px; }
+  .tabla-envoltura { overflow-x: auto; }
+  .barra-admin { display: flex; gap: 9px; flex-wrap: wrap; margin-bottom: 18px; }
+</style>
+</head>
+<body>
+
+<header class="encabezado">
+  <div class="contenedor encabezado__fila">
+    <a class="logo" href="index.html">
+      <img class="logo__img" src="img/logo.jpg" alt="Compas Outlet">
+      <span class="logo__marca">
+        <span class="logo__nombre">Panel de <em>catálogo</em></span>
+      </span>
+    </a>
+    <nav class="nav" style="margin-left:auto">
+      <a href="index.html">← Volver a la tienda</a>
+    </nav>
+  </div>
+</header>
+
+<main class="contenedor" style="padding-top:26px;padding-bottom:50px">
+
+  <div class="aviso">
+    <strong>Cómo funciona este panel</strong>
+    Aquí agregas y editas tus artículos con un formulario. Los cambios se guardan en este
+    navegador mientras trabajas. Cuando termines, pulsa
+    <b>«Descargar productos.js»</b> y reemplaza con ese archivo el que está en la carpeta
+    <code>js/</code>. Recién ahí quedan publicados en la tienda.
+  </div>
+
+  <div class="barra-admin">
+    <button class="btn btn--primario" id="btnDescargar">Descargar productos.js</button>
+    <button class="btn btn--claro" id="btnRecargar">Recargar desde productos.js</button>
+    <button class="btn btn--claro" id="btnNuevo">+ Artículo nuevo</button>
+    <a class="btn btn--claro" href="index.html" target="_blank">Ver tienda</a>
+  </div>
+
+  <div class="admin">
+
+    <!-- ---------------------------------------------------------- Formulario -->
+    <form class="panel" id="formulario">
+      <h2 id="tituloForm">Nuevo artículo</h2>
+      <p class="sub">Los campos con * son obligatorios.</p>
+
+      <input type="hidden" id="fId">
+
+      <div class="campo">
+        <label for="fNombre">Nombre del artículo *</label>
+        <input type="text" id="fNombre" required placeholder="Ej: Butaca de cuero capitoneada">
+      </div>
+
+      <div class="campo">
+        <label for="fCategoria">Categoría *</label>
+        <select id="fCategoria" required></select>
+      </div>
+
+      <div class="dos">
+        <div class="campo">
+          <label for="fPrecio">Precio de venta * <span class="pista">(0 = mostrar "Consultar precio")</span></label>
+          <input type="number" id="fPrecio" step="0.01" min="0" required placeholder="0 = sin precio publicado">
+        </div>
+        <div class="campo">
+          <label for="fPrecioAntes">Precio anterior <span class="pista">(0 = sin oferta)</span></label>
+          <input type="number" id="fPrecioAntes" step="0.01" min="0" value="0">
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="fStock">Cantidad disponible <span class="pista">(0 = agotado)</span></label>
+        <input type="number" id="fStock" min="0" step="1" value="1">
+      </div>
+
+      <div class="campo">
+        <label>Foto del artículo</label>
+        <div class="previa" id="previa">Sin foto seleccionada</div>
+        <input type="text" id="fImagen" placeholder="img/nombre-de-la-foto.jpg">
+        <p class="pista" style="margin:7px 0 0">
+          Pulsa el botón y elige la foto: se escribe la ruta sola.
+          Luego copia ese archivo dentro de la carpeta <code>img/</code>.
+        </p>
+        <input type="file" id="fArchivo" accept="image/*" style="display:none">
+        <button type="button" class="btn btn--claro" id="btnFoto" style="margin-top:9px;padding:8px 14px;font-size:13.5px">Elegir foto…</button>
+      </div>
+
+      <div class="campo">
+        <label for="fDescripcion">Descripción</label>
+        <textarea id="fDescripcion" placeholder="Material, medidas, colores disponibles, qué incluye..."></textarea>
+      </div>
+
+      <div class="campo">
+        <label for="fEtiquetas">Palabras para el buscador <span class="pista">(separadas por coma)</span></label>
+        <input type="text" id="fEtiquetas" placeholder="butaca, sala, cuero">
+      </div>
+
+      <label class="check">
+        <input type="checkbox" id="fDestacado">
+        Mostrar en «Lo más pedido» de la portada
+      </label>
+
+      <button class="btn btn--primario btn--bloque" type="submit" id="btnGuardar">Guardar artículo</button>
+      <button class="btn btn--claro btn--bloque" type="button" id="btnCancelar" style="margin-top:8px">Limpiar formulario</button>
+    </form>
+
+    <!-- ------------------------------------------------------------- Listado -->
+    <div class="panel">
+      <h2>Artículos en el catálogo (<span id="conteo">0</span>)</h2>
+      <p class="sub">Pulsa «Editar» para modificar uno existente.</p>
+
+      <div class="campo" style="margin-bottom:16px">
+        <input type="text" id="filtroAdmin" placeholder="Filtrar por nombre o categoría...">
+      </div>
+
+      <div class="tabla-envoltura">
+        <table>
+          <thead>
+            <tr>
+              <th></th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Stock</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="tabla"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/productos.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

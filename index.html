@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compas Outlet | No son clientes, son nuestros Compas</title>
+<meta name="description" content="Compas Outlet: tienda de artículos varios en Costa Rica. Muebles, hogar, cocina, electrónicos, ropa y calzado a precio de outlet. Apartados disponibles y pedidos por WhatsApp.">
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23ffffff'/%3E%3Crect x='10' y='38' width='33' height='26' rx='9' fill='%23ce1126'/%3E%3Crect x='57' y='38' width='33' height='26' rx='9' fill='%230f2a66'/%3E%3Cg stroke='%23ce1126' stroke-width='5' stroke-linecap='round'%3E%3Cpath d='M50 20 v9 M50 80 v-9'/%3E%3C/g%3E%3C/svg%3E">
+</head>
+<body>
+
+<!-- ====================================================== Barra superior -->
+<div class="barra-aviso">
+  <strong>APARTADOS DISPONIBLES</strong> · Varios métodos de pago · Pedidos por WhatsApp
+</div>
+
+<!-- ============================================================ Encabezado -->
+<header class="encabezado">
+  <div class="contenedor encabezado__fila">
+
+    <a class="logo" href="#inicio" aria-label="Ir al inicio">
+      <!-- Si existe img/logo.png se muestra esa imagen en lugar del dibujo -->
+      <img class="logo__img oculto" id="logoImg" alt="">
+      <svg class="marca" id="logoSvg" viewBox="0 0 100 100" aria-hidden="true">
+        <rect x="5" y="34" width="39" height="32" rx="11" fill="#ce1126"/>
+        <rect x="56" y="34" width="39" height="32" rx="11" fill="#0f2a66"/>
+        <g stroke="#ce1126" stroke-width="7" stroke-linecap="round">
+          <path d="M50 14 v13 M50 86 v-13"/>
+        </g>
+      </svg>
+      <span class="logo__marca">
+        <span class="logo__nombre" id="logoNombre">Compas <em>Outlet</em></span>
+        <span class="logo__tag" data-campo="eslogan">No son clientes, son Compas</span>
+      </span>
+    </a>
+
+    <nav class="nav" id="nav">
+      <a href="#inicio">Inicio</a>
+      <a href="#categorias-sec">Categorías</a>
+      <a href="#catalogo">Catálogo</a>
+      <a href="#nosotros">Nosotros</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+
+    <div class="acciones">
+      <button class="btn-icono" id="btnTema" title="Cambiar entre modo claro y oscuro" aria-label="Cambiar tema"></button>
+      <button class="btn-icono" id="btnCarrito" title="Ver mi pedido" aria-label="Ver mi pedido">
+        <span class="contador oculto" id="contadorCarrito">0</span>
+      </button>
+      <button class="btn-icono menu-movil" id="btnMenu" aria-label="Abrir menú"></button>
+    </div>
+
+  </div>
+</header>
+
+<!-- ================================================================== Hero -->
+<section class="hero" id="inicio">
+  <div class="contenedor hero__interior">
+    <span class="hero__pill">Tienda de artículos varios</span>
+    <h1>No son nuestros clientes,<br><span>son nuestros Compas</span></h1>
+    <p data-campo="descripcion">
+      Muebles, hogar, cocina, electrónicos, ropa, calzado y mucho más, a precio de outlet.
+    </p>
+    <div class="hero__botones">
+      <a class="btn btn--primario" href="#catalogo">Ver catálogo</a>
+      <a class="btn btn--fantasma" href="#" data-wa target="_blank" rel="noopener">Escríbenos por WhatsApp</a>
+    </div>
+  </div>
+</section>
+
+<div class="contenedor">
+  <div class="ventajas">
+    <div class="ventaja">
+      <div class="ventaja__ico" data-ico="etiqueta"></div>
+      <div><h3>Precio de outlet</h3><p>Lotes limitados: lo que ves publicado es lo que hay.</p></div>
+    </div>
+    <div class="ventaja">
+      <div class="ventaja__ico" data-ico="caja"></div>
+      <div><h3>Apartados</h3><p>¿Te gustó algo? Lo apartamos mientras completas el pago.</p></div>
+    </div>
+    <div class="ventaja">
+      <div class="ventaja__ico" data-ico="tarjeta"></div>
+      <div><h3>Varios métodos de pago</h3><p>Consúltanos cuál te queda mejor al hacer el pedido.</p></div>
+    </div>
+    <div class="ventaja">
+      <div class="ventaja__ico" data-ico="chat"></div>
+      <div><h3>Atención directa</h3><p data-campo="notaEnvio">Coordinamos entrega por WhatsApp.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================== Categorías -->
+<section class="seccion" id="categorias-sec">
+  <div class="contenedor">
+    <div class="seccion__cabecera">
+      <div>
+        <h2>Explora por categoría</h2>
+        <p><span id="totalProductos">0</span> artículos repartidos en <span id="totalCategorias">0</span> categorías</p>
+      </div>
+    </div>
+    <div class="categorias" id="categorias"></div>
+  </div>
+</section>
+
+<!-- =========================================================== Destacados -->
+<section class="seccion" id="seccionDestacados">
+  <div class="contenedor">
+    <div class="seccion__cabecera">
+      <div>
+        <h2>Lo más buscado</h2>
+        <p>Los favoritos de nuestros Compas</p>
+      </div>
+      <a class="btn btn--claro" href="#catalogo">Ver todo</a>
+    </div>
+    <div class="rejilla" id="destacados"></div>
+  </div>
+</section>
+
+<!-- ============================================================== Catálogo -->
+<section class="seccion" id="catalogo">
+  <div class="contenedor">
+    <div class="seccion__cabecera">
+      <div>
+        <h2>Catálogo completo</h2>
+        <p>Busca, filtra y arma tu pedido</p>
+      </div>
+    </div>
+
+    <div class="filtros">
+      <div class="filtros__fila">
+        <div class="buscador">
+          <span id="icoBuscar"></span>
+          <input type="search" id="busqueda" placeholder="Buscar un artículo... (ej: sillón, olla, tenis, audífonos)" aria-label="Buscar productos">
+        </div>
+
+        <select class="select" id="orden" aria-label="Ordenar productos">
+          <option value="relevancia">Ordenar: destacados</option>
+          <option value="precioAsc">Precio: menor a mayor</option>
+          <option value="precioDesc">Precio: mayor a menor</option>
+          <option value="descuento">Mayor descuento</option>
+          <option value="nombre">Nombre A–Z</option>
+        </select>
+
+        <label class="chip" style="display:flex;align-items:center;gap:7px;cursor:pointer">
+          <input type="checkbox" id="ofertas" style="accent-color:#ce1126">
+          Solo ofertas
+        </label>
+      </div>
+
+      <div class="chips" id="chips"></div>
+    </div>
+
+    <p class="resumen-filtro" id="resumen"></p>
+    <div class="rejilla" id="rejilla"></div>
+
+    <div class="centrar">
+      <button class="btn btn--claro oculto" id="verMas">Ver más artículos</button>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== Nosotros -->
+<section class="seccion" id="nosotros">
+  <div class="contenedor">
+    <div class="seccion__cabecera">
+      <div>
+        <h2>Sobre <span data-campo="nombre">Compas Outlet</span></h2>
+      </div>
+    </div>
+    <div class="ventajas" style="margin-top:0">
+      <div class="ventaja" style="grid-column:1/-1;display:block">
+        <p style="margin:0;font-size:15.5px;line-height:1.7;color:var(--text-muted)">
+          Somos una tienda de artículos varios: muebles, cosas para la casa y la cocina,
+          electrónicos, ropa y calzado, todo a precio de outlet. Aquí no manejamos
+          «clientes»: el que nos compra es un Compa, y así lo tratamos.
+          <br><br>
+          Trabajamos con lotes limitados, así que lo que está publicado es lo que hay
+          disponible. Si algo te gusta, escríbenos y te lo apartamos mientras completas
+          el pago. Puedes armar tu pedido aquí mismo desde el catálogo y enviárnoslo por
+          WhatsApp con un solo toque: te confirmamos disponibilidad, coordinamos el pago
+          y te decimos cuándo lo recibes.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== Contacto -->
+<section class="contacto" id="contacto">
+  <div class="contenedor">
+    <div class="contacto__rejilla">
+
+      <div>
+        <h2>Hablemos</h2>
+        <p style="color:var(--text-muted);margin:0">
+          ¿Buscas algo que no está en el catálogo? Pregúntanos: conseguimos artículos por encargo.
+        </p>
+
+        <ul class="lista-datos">
+          <li>
+            <span class="ico" data-ico="wa"></span>
+            <div><strong>WhatsApp</strong><span data-campo="telefono">Escríbenos</span></div>
+          </li>
+          <li>
+            <span class="ico" data-ico="pin"></span>
+            <div><strong>Ubicación</strong><span data-campo="direccion">Costa Rica</span></div>
+          </li>
+          <li>
+            <span class="ico" data-ico="reloj"></span>
+            <div><strong>Horario</strong><span data-campo="horario">Escríbenos por WhatsApp</span></div>
+          </li>
+          <li>
+            <span class="ico" data-ico="caja"></span>
+            <div><strong>Apartados</strong><span>Consulta las condiciones al hacer tu pedido</span></div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="tarjeta-cta">
+        <h3>¿Listo para tu pedido?</h3>
+        <p>Arma tu carrito en el catálogo y envíanoslo por WhatsApp. Te respondemos enseguida.</p>
+        <a class="btn btn--wa btn--bloque" href="#" data-wa target="_blank" rel="noopener">
+          Escribir por WhatsApp
+        </a>
+        <a class="btn btn--fantasma btn--bloque oculto" id="btnGrupo" href="#" target="_blank" rel="noopener" style="margin-top:9px">
+          Unirme al grupo de ofertas
+        </a>
+        <div class="redes" id="redes"></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ==================================================================== Pie -->
+<footer class="pie">
+  <div class="contenedor pie__fila">
+    <span>© <span id="anio">2026</span> <span data-campo="nombre">Compas Outlet</span>. Todos los derechos reservados.</span>
+    <span>Hecho para nuestros Compas · <a href="admin.html">Administrar catálogo</a></span>
+  </div>
+</footer>
+
+<!-- ====================================================== Botón flotante WA -->
+<a class="wa-flotante" href="#" data-wa target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
+  <span data-ico="wa"></span>
+</a>
+
+<!-- ================================================================= Modal -->
+<div class="velo oculto" id="modal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <button class="modal__cerrar" id="modalCerrar" aria-label="Cerrar">×</button>
+    <div id="modalCuerpo"></div>
+  </div>
+</div>
+
+<!-- =============================================================== Carrito -->
+<div class="oculto" id="panelCarrito">
+  <div class="panel-velo" id="carritoVelo"></div>
+  <aside class="carrito" role="dialog" aria-modal="true" aria-label="Mi pedido">
+
+    <div class="carrito__cabecera">
+      <h2>Mi pedido</h2>
+      <button class="modal__cerrar" id="carritoCerrar" style="position:static" aria-label="Cerrar">×</button>
+    </div>
+
+    <div class="carrito__lista" id="carritoLista"></div>
+
+    <div class="carrito__pie oculto" id="carritoPie">
+      <div class="total-fila">
+        <span id="totalUnidades">0 artículos</span>
+      </div>
+      <div class="total-fila oculto" id="filaAhorro">
+        <span>Ahorro total</span>
+        <span id="totalAhorro" style="color:var(--green);font-weight:600">0</span>
+      </div>
+      <div class="total-fila total-fila--grande">
+        <span>Total</span>
+        <span id="totalMonto">0</span>
+      </div>
+      <button class="btn btn--wa btn--bloque" id="btnEnviarPedido">
+        Enviar pedido por WhatsApp
+      </button>
+      <button class="btn btn--claro btn--bloque" id="btnVaciar" style="margin-top:8px">
+        Vaciar pedido
+      </button>
+      <p class="nota-pie">
+        El pedido se abre como un mensaje de WhatsApp listo para enviar.
+        No se cobra nada desde la página.
+      </p>
+    </div>
+
+  </aside>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/productos.js"></script>
+<script src="js/tienda.js"></script>
+</body>
+</html>

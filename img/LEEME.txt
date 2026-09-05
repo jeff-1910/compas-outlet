@@ -1,0 +1,7 @@
+Coloca aqui las fotos de tus articulos.
+
+Usa nombres sin espacios ni acentos, por ejemplo:
+  bolso-lona.jpg
+  audifonos-tws.jpg
+
+Luego, en el campo "imagen" del producto escribe: img/bolso-lona.jpg
