@@ -149,14 +149,17 @@ while ($listener.IsListening) {
       Write-Output "  [publicando] subiendo cambios a GitHub..."
       Push-Location $raiz
 
-      # Capturamos el error estandar en un archivo en vez de con 2>&1:
-      # en PowerShell 5.1 esa redireccion envuelve los avisos normales de git
-      # como si fueran errores y el mensaje sale ilegible.
-      $tmpErr = Join-Path $env:TEMP "compas-git-error.txt"
-      $salida = ""
+      # Git escribe avisos y progreso por el error estandar. Si redirigimos
+      # eso dentro de PowerShell 5.1, cada linea vuelve envuelta como si fuera
+      # un error y el mensaje sale ilegible. Por eso la redireccion la hace
+      # cmd.exe, fuera de PowerShell: aqui solo llega texto limpio.
+      function Git-Correr($argumentos) {
+        return (cmd /c ('"' + $git + '" ' + $argumentos + ' 2>&1') | Out-String)
+      }
 
-      & $git add -A 2>$tmpErr | Out-Null
-      $hayCambios = (& $git status --porcelain | Out-String).Trim()
+      $salida = ""
+      $salida += Git-Correr "add -A"
+      $hayCambios = (Git-Correr "status --porcelain").Trim()
 
       if ([string]::IsNullOrWhiteSpace($hayCambios)) {
         Pop-Location
@@ -167,13 +170,9 @@ while ($listener.IsListening) {
       }
 
       $fecha = Get-Date -Format "yyyy-MM-dd HH:mm"
-      $salida += (& $git commit -m "Actualizacion del catalogo - $fecha" 2>$tmpErr | Out-String)
-      $salida += (& $git push 2>$tmpErr | Out-String)
+      $salida += Git-Correr ('commit -m "Actualizacion del catalogo - ' + $fecha + '"')
+      $salida += Git-Correr "push"
       $codigo = $LASTEXITCODE
-      if (Test-Path $tmpErr) {
-        $salida += (Get-Content $tmpErr -Raw -ErrorAction SilentlyContinue)
-        Remove-Item $tmpErr -ErrorAction SilentlyContinue
-      }
       Pop-Location
 
       if ($codigo -eq 0) {
