@@ -48,8 +48,8 @@ sobra y en horizontal.
 - Precios en colones, con formato `₡85.000`
 - Las tres cosas que anuncias en tus destacados de Instagram: **WhatsApp**,
   **Apartados** y **Métodos de pago**
-- Categorías pensadas para lo que vendes: Muebles, Decoración, Hogar y Cocina,
-  Organización, Seguridad y Varios
+- Categorías pensadas para lo que vendes: Muebles, Hogar, Cocina,
+  Electrónicos, Ropa, Calzado y Varios
 
 ---
 
@@ -59,28 +59,42 @@ Ahora hay **3 artículos**, sacados de las fotos de tu Instagram (la butaca, la
 caja fuerte y el librero hexagonal). Les faltan los nombres exactos y los
 precios. Tienes 54 publicaciones más por subir.
 
-### Opción A — con formulario (recomendada)
+### Opción A — el panel (es la buena)
 
-1. Abre **`admin.html`**.
-2. Llena el formulario y pulsa *Guardar artículo*. Repite con cada producto.
-3. Cuando termines, pulsa **«Descargar productos.js»**.
-4. Mueve el archivo descargado a la carpeta `js/`, reemplazando el que está ahí.
-5. Recarga `index.html`.
+**Doble clic en `administrar.cmd`.**
 
-Los cambios se guardan solos en el navegador mientras trabajas, así que puedes
-cerrar y seguir después. Pero **hasta que no descargues el archivo y lo
-reemplaces, la tienda sigue mostrando lo anterior**.
+Se abre una ventana negra (el motor del panel) y el navegador con el panel.
+**No cierres la ventana negra** mientras trabajas: si la cierras, el panel deja
+de poder guardar.
+
+Dentro del panel:
+
+1. Llenas el formulario y pulsas *Guardar artículo*. Repites con cada producto.
+2. Cuando termines la tanda, pulsas **«Guardar en la tienda»** — ahí se
+   escriben de verdad en tu página.
+3. *Ver tienda* para revisar cómo quedó.
+4. **«Publicar en internet»** y en menos de un minuto está en
+   `compas-outlet.vercel.app`.
+
+Las fotos se suben solas: eliges la foto y el panel la guarda en `img/` ya
+achicada y optimizada. Una foto de celular de 5 MB queda en unos 20 KB, sin que
+tengas que hacer nada.
 
 Consejos para cargar muchos de una vez:
 
-- La categoría se queda puesta después de guardar, y el cursor vuelve al campo
-  del nombre. Así puedes meter todos los muebles seguidos sin volver a
-  elegir "Muebles" cada vez.
-- Ve descargando `productos.js` cada 10 o 15 artículos, no solo al final. Si se
-  borran los datos del navegador, pierdes lo que no hayas descargado.
+- La categoría se queda puesta después de guardar y el cursor vuelve al nombre,
+  para que metas todos los muebles seguidos sin volver a elegir "Muebles".
+- Pulsa «Guardar en la tienda» cada 10 o 15 artículos, no solo al final.
 - Los 3 artículos de ejemplo (butaca, caja fuerte, librero) los puedes editar
-  con sus datos reales o borrarlos y empezar de cero. La página funciona igual
-  con el catálogo vacío.
+  con sus datos reales o borrarlos. La página funciona igual con el catálogo
+  vacío.
+- Al guardar, el catálogo anterior queda como `js/productos-anterior.js` por si
+  necesitas volver atrás.
+
+> **Ojo:** si abres `admin.html` haciendo doble clic, o entras a
+> `compas-outlet.vercel.app/admin.html`, el panel arranca en **modo solo
+> lectura**: te avisa arriba en rojo y lo que edites ahí no llega a la tienda.
+> Siempre entra por `administrar.cmd`.
 
 ### Opción B — a mano
 
@@ -90,8 +104,8 @@ Abre `js/productos.js` y copia un bloque, cambiando los valores:
 {
   id: 4,                            // número único, no repetir
   nombre: "Juego de comedor 6 sillas",
-  categoria: "muebles",             // muebles, decoracion, hogar,
-                                    // organizacion, seguridad, otros
+  categoria: "muebles",             // muebles, hogar, cocina,
+                                    // electronicos, ropa, calzado, otros
   precio: 325000,                   // 0 = muestra "Consultar precio"
   precioAntes: 420000,              // 0 si no está en oferta
   imagen: "img/comedor.jpg",        // "" si todavía no tienes foto
@@ -113,14 +127,14 @@ prefieres cotizar en privado. Esos artículos no entran al carrito.
 
 ## Las fotos
 
-1. Copia las fotos dentro de la carpeta **`img/`**.
-2. En el campo *imagen* escribe `img/` + el nombre exacto del archivo.
+Desde el panel no tienes que hacer nada: eliges la foto y se guarda sola en
+`img/`, ya achicada a 1200 px y comprimida. También le limpia el nombre
+(`Foto WhatsApp ÑÁ.PNG` queda como `foto-whatsapp-na.jpg`).
 
 Consejos:
-- Nombres sin espacios ni acentos: `butaca-cuero.jpg`, no `Butaca de Cuero.JPG`.
 - Cuadradas (1:1) se ven mejor en la cuadrícula.
-- Menos de 300 KB cada una, para que cargue rápido.
-- Si no pones foto, sale un recuadro con el ícono de la categoría. No se rompe nada.
+- Si no pones foto, sale un recuadro con el ícono de la categoría. No se rompe
+  nada, así que puedes cargar el artículo ahora y ponerle la foto después.
 
 ---
 
@@ -138,16 +152,26 @@ Consejos:
 
 ---
 
-## Publicarla en internet (gratis)
+## Tu página en internet
 
-Cuando ya tengas tus productos cargados:
+Ya está publicada en **https://compas-outlet.vercel.app**
 
-1. Entra a [netlify.com/drop](https://app.netlify.com/drop)
-2. Arrastra la carpeta **`pagina weeb`** completa a esa página.
-3. Te da un enlace público al instante. Ese es el que pones en la biografía de
-   Instagram y Facebook, en lugar del enlace del grupo (o junto a él).
+Funciona así: tu carpeta está conectada a un repositorio en GitHub
+(`github.com/jeff-1910/compas-outlet`), y Vercel vigila ese repositorio. Cada
+vez que pulsas «Publicar en internet» en el panel, los cambios viajan a GitHub
+y Vercel actualiza el sitio solo, en menos de un minuto.
 
-Para actualizar el catálogo después, vuelves a arrastrar la carpeta.
+No tienes que tocar nada de eso: el botón hace todo.
+
+### Si quieres tu propio dominio
+
+Algo como `compasoutlet.com` hay que comprarlo (unos 10–15 dólares al año en
+Namecheap, Porkbun o Cloudflare). Después, en Vercel entras a
+*Settings → Domains → Add*, escribes el dominio y Vercel te da unos registros
+DNS que copias en el panel de donde lo compraste. El candado de seguridad
+(HTTPS) lo pone Vercel gratis.
+
+El `.vercel.app` que ya tienes es permanente y gratis, así que no hay apuro.
 
 ---
 
@@ -155,8 +179,11 @@ Para actualizar el catálogo después, vuelves a arrastrar la carpeta.
 
 ```
 pagina weeb/
+├── administrar.cmd    ← DOBLE CLIC AQUÍ para cargar artículos
 ├── index.html         La tienda
-├── admin.html         Panel para cargar artículos
+├── admin.html         El panel (no lo abras directo: usa administrar.cmd)
+├── servidor-admin.ps1 El motor del panel
+├── publicar.cmd       Publicar sin abrir el panel (por si editas a mano)
 ├── css/
 │   └── estilos.css    Colores y diseño
 ├── js/
@@ -164,5 +191,8 @@ pagina weeb/
 │   ├── productos.js   ← tu catálogo
 │   ├── tienda.js      Funcionamiento de la tienda
 │   └── admin.js       Funcionamiento del panel
-└── img/               ← tu logo.png y las fotos de los productos
+└── img/               ← tu logo.jpg y las fotos de los productos
 ```
+
+El panel y las herramientas locales no se publican en internet: los excluye
+`.vercelignore`. En tu sitio solo queda la tienda.

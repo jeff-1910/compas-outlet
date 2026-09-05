@@ -6,3 +6,6 @@ desktop.ini
 # Archivos temporales
 *.tmp
 _previsualizacion.html
+
+# Copia de seguridad que crea el panel al guardar
+js/productos-anterior.js

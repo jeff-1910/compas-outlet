@@ -1,0 +1,9 @@
+# El panel de administracion es solo para tu computadora.
+# Publicarlo confunde: en el sitio en vivo no puede guardar nada.
+admin.html
+js/admin.js
+
+# Herramientas locales, no sirven en un servidor web
+administrar.cmd
+publicar.cmd
+servidor-admin.ps1
