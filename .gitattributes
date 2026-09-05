@@ -1,0 +1,13 @@
+# Normaliza los saltos de linea y evita los avisos de LF/CRLF en cada commit
+* text=auto
+
+# Estos tienen que conservar los saltos de linea de Windows si o si
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binarios: que git no los toque
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.webp binary
+*.gif binary
