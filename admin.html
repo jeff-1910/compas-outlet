@@ -110,19 +110,16 @@
 
 <main class="contenedor" style="padding-top:26px;padding-bottom:50px">
 
-  <div class="aviso">
-    <strong>Cómo funciona este panel</strong>
-    Aquí agregas y editas tus artículos con un formulario. Los cambios se guardan en este
-    navegador mientras trabajas. Cuando termines, pulsa
-    <b>«Descargar productos.js»</b> y reemplaza con ese archivo el que está en la carpeta
-    <code>js/</code>. Recién ahí quedan publicados en la tienda.
-  </div>
+  <!-- El texto lo pone admin.js segun si estamos en modo servidor o no -->
+  <div class="aviso" id="avisoModo"></div>
 
   <div class="barra-admin">
-    <button class="btn btn--primario" id="btnDescargar">Descargar productos.js</button>
-    <button class="btn btn--claro" id="btnRecargar">Recargar desde productos.js</button>
+    <button class="btn btn--primario oculto" id="btnGuardarTienda">Guardar en la tienda</button>
+    <button class="btn btn--wa oculto" id="btnPublicar">Publicar en internet</button>
+    <button class="btn btn--primario oculto" id="btnDescargar">Descargar productos.js</button>
     <button class="btn btn--claro" id="btnNuevo">+ Artículo nuevo</button>
     <a class="btn btn--claro" href="index.html" target="_blank">Ver tienda</a>
+    <button class="btn btn--claro" id="btnRecargar">Descartar cambios</button>
   </div>
 
   <div class="admin">
@@ -164,10 +161,7 @@
         <label>Foto del artículo</label>
         <div class="previa" id="previa">Sin foto seleccionada</div>
         <input type="text" id="fImagen" placeholder="img/nombre-de-la-foto.jpg">
-        <p class="pista" style="margin:7px 0 0">
-          Pulsa el botón y elige la foto: se escribe la ruta sola.
-          Luego copia ese archivo dentro de la carpeta <code>img/</code>.
-        </p>
+        <p class="pista" id="pistaFoto" style="margin:7px 0 0"></p>
         <input type="file" id="fArchivo" accept="image/*" style="display:none">
         <button type="button" class="btn btn--claro" id="btnFoto" style="margin-top:9px;padding:8px 14px;font-size:13.5px">Elegir foto…</button>
       </div>

@@ -1,8 +1,14 @@
 /* =========================================================================
    Panel de administracion del catalogo.
 
-   Trabaja sobre una copia en el navegador (borrador). Para publicar los
-   cambios hay que descargar productos.js y reemplazar el archivo real.
+   Tiene dos modos:
+
+   - Modo servidor (abriendo administrar.cmd): guarda directo en
+     js/productos.js, sube las fotos a img/ ya optimizadas y puede
+     publicar en internet con un boton.
+
+   - Modo solo lectura (archivo suelto o sitio publicado): no puede
+     escribir nada. Solo queda descargar productos.js a mano.
    ========================================================================= */
 
 (function () {
@@ -40,6 +46,58 @@
   let lista = cargarBorrador() || JSON.parse(JSON.stringify(PRODUCTOS));
   let editandoId = null;
   let urlPrevia = null;
+
+  // true cuando el panel corre sobre administrar.cmd: ahi si puede escribir
+  // en los archivos de verdad. false si se abrio como archivo suelto o en
+  // el sitio publicado, donde solo queda la descarga manual.
+  let modoServidor = false;
+
+  // Hay ediciones hechas en el panel que todavia no se escribieron en
+  // js/productos.js. Si hay borrador guardado, arrancamos avisando.
+  let hayCambiosSinGuardar = !!cargarBorrador();
+
+  function pintarAviso() {
+    const caja = $("#avisoModo");
+    if (!modoServidor) {
+      caja.innerHTML =
+        "<strong>⚠ Estás en modo solo lectura</strong>" +
+        "Lo que edites aquí <b>no va a llegar a tu tienda</b>: se queda guardado " +
+        "solo en este navegador. " +
+        "Para editar de verdad, cierra esta pestaña y abre " +
+        "<code>administrar.cmd</code> (doble clic) en la carpeta de tu página.";
+      caja.style.borderColor = "var(--rojo)";
+      return;
+    }
+    caja.style.borderColor = "";
+    if (hayCambiosSinGuardar) {
+      caja.innerHTML =
+        "<strong>Tienes cambios sin guardar</strong>" +
+        'Pulsa <b>«Guardar en la tienda»</b> para escribirlos en tu página, y luego ' +
+        '<b>«Publicar en internet»</b> para que se vean en compas-outlet.vercel.app';
+    } else {
+      caja.innerHTML =
+        "<strong>Todo guardado</strong>" +
+        "Agrega o edita artículos con el formulario. Al terminar, " +
+        '<b>«Guardar en la tienda»</b> y después <b>«Publicar en internet»</b>.';
+    }
+  }
+
+  // Cualquier edicion deja el catalogo "sucio" hasta que se guarde en disco.
+  function marcarSucio() {
+    hayCambiosSinGuardar = true;
+    pintarAviso();
+  }
+
+  async function detectarModo() {
+    try {
+      const r = await fetch("/api/estado", { cache: "no-store" });
+      if (!r.ok) return false;
+      const d = await r.json();
+      return d && d.modo === "servidor";
+    } catch (e) {
+      return false;
+    }
+  }
 
   function cargarBorrador() {
     try {
@@ -122,6 +180,7 @@
     lista = lista.filter((x) => x.id !== Number(id));
     if (editandoId === Number(id)) limpiarFormulario();
     guardarBorrador();
+    marcarSucio();
     pintarTabla();
   }
 
@@ -169,6 +228,7 @@
 
     ultimaCategoria = datos.categoria;
     guardarBorrador();
+    marcarSucio();
     pintarTabla();
     limpiarFormulario(true);
     $("#fNombre").focus();
@@ -286,12 +346,156 @@
     );
   }
 
+  /* --------------------------------- Guardar y publicar (modo servidor) */
+
+  function ocupado(boton, texto) {
+    boton.dataset.textoOriginal = boton.textContent;
+    boton.textContent = texto;
+    boton.disabled = true;
+  }
+  function libre(boton) {
+    boton.textContent = boton.dataset.textoOriginal || boton.textContent;
+    boton.disabled = false;
+  }
+
+  async function guardarEnTienda() {
+    const boton = $("#btnGuardarTienda");
+    ocupado(boton, "Guardando…");
+    try {
+      const r = await fetch("/api/guardar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contenido: generarArchivo(), cantidad: lista.length }),
+      });
+      const d = await r.json();
+      libre(boton);
+      if (!d.ok) return alert("No se pudo guardar: " + (d.mensaje || "error desconocido"));
+
+      // Lo guardado ya es la version buena: el borrador deja de hacer falta.
+      try { localStorage.removeItem(CLAVE); } catch (e) { /* ignorar */ }
+      hayCambiosSinGuardar = false;
+      pintarAviso();
+      alert(
+        "Guardado en la tienda.\n\n" +
+        lista.length + " artículos.\n\n" +
+        'Ábrela con "Ver tienda" para revisarla. Cuando esté como quieres, ' +
+        'pulsa "Publicar en internet".'
+      );
+    } catch (e) {
+      libre(boton);
+      alert("No se pudo guardar: " + e.message);
+    }
+  }
+
+  async function publicar() {
+    if (hayCambiosSinGuardar &&
+        !confirm('Tienes cambios sin guardar en la tienda.\n\n¿Publicar de todos modos?\n' +
+                 '(Lo no guardado no se sube.)')) return;
+
+    const boton = $("#btnPublicar");
+    ocupado(boton, "Publicando…");
+    try {
+      const r = await fetch("/api/publicar", { method: "POST" });
+      const d = await r.json();
+      libre(boton);
+      if (d.ok) {
+        alert(d.mensaje);
+      } else {
+        alert("No se pudo publicar.\n\n" + (d.mensaje || "") + "\n\n" + (d.detalle || ""));
+      }
+    } catch (e) {
+      libre(boton);
+      alert("No se pudo publicar: " + e.message);
+    }
+  }
+
+  /* ------------------------------------------------- Fotos (optimizadas) */
+
+  // Achica la foto antes de guardarla: 1200 px de lado mayor y JPEG de
+  // calidad alta. Una foto de celular de 4 MB queda en unos 200 KB.
+  function optimizar(archivo) {
+    return new Promise((resolve, reject) => {
+      const lector = new FileReader();
+      lector.onerror = () => reject(new Error("No se pudo leer la foto"));
+      lector.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error("El archivo no parece una imagen"));
+        img.onload = () => {
+          const max = 1200;
+          let { width: w, height: h } = img;
+          if (w > max || h > max) {
+            const k = Math.min(max / w, max / h);
+            w = Math.round(w * k);
+            h = Math.round(h * k);
+          }
+          const c = document.createElement("canvas");
+          c.width = w; c.height = h;
+          const ctx = c.getContext("2d");
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(c.toDataURL("image/jpeg", 0.85).split(",")[1]);
+        };
+        img.src = lector.result;
+      };
+      lector.readAsDataURL(archivo);
+    });
+  }
+
+  // Convierte "Foto WhatsApp 2026.jpeg" en "foto-whatsapp-2026.jpg"
+  function nombreLimpio(nombre) {
+    const base = nombre.replace(/\.[^.]+$/, "");
+    const limpio = base
+      .toLowerCase()
+      .normalize("NFD")
+      .split("")
+      .filter((c) => { const n = c.charCodeAt(0); return n < 0x300 || n > 0x36f; })
+      .join("")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    return (limpio || "foto") + ".jpg";
+  }
+
+  async function subirFoto(archivo) {
+    const boton = $("#btnFoto");
+    ocupado(boton, "Subiendo…");
+    try {
+      const base64 = await optimizar(archivo);
+      const nombre = nombreLimpio(archivo.name);
+      const r = await fetch("/api/foto", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombre: nombre, base64: base64 }),
+      });
+      const d = await r.json();
+      libre(boton);
+      if (!d.ok) return alert("No se pudo subir la foto.");
+      $("#fImagen").value = d.ruta;
+      pintarPrevia(d.ruta + "?t=" + Date.now());
+    } catch (e) {
+      libre(boton);
+      alert("No se pudo subir la foto: " + e.message);
+    }
+  }
+
   /* ------------------------------------------------------------- Arranque */
 
-  function iniciar() {
+  async function iniciar() {
     llenarCategorias();
     limpiarFormulario();
     pintarTabla();
+
+    modoServidor = await detectarModo();
+
+    // Los botones cambian segun donde se este usando el panel.
+    $("#btnGuardarTienda").classList.toggle("oculto", !modoServidor);
+    $("#btnPublicar").classList.toggle("oculto", !modoServidor);
+    $("#btnDescargar").classList.toggle("oculto", modoServidor);
+    $("#pistaFoto").innerHTML = modoServidor
+      ? "Elige la foto y se guarda sola en tu página, ya optimizada."
+      : "Aquí solo se anota el nombre. Para que la foto se guarde de verdad, " +
+        "usa <code>administrar.cmd</code>.";
+    pintarAviso();
 
     $("#formulario").addEventListener("submit", guardar);
     $("#btnCancelar").addEventListener("click", limpiarFormulario);
@@ -300,13 +504,18 @@
       $("#fNombre").focus();
     });
     $("#btnDescargar").addEventListener("click", descargar);
+    $("#btnGuardarTienda").addEventListener("click", guardarEnTienda);
+    $("#btnPublicar").addEventListener("click", publicar);
 
     $("#btnRecargar").addEventListener("click", () => {
-      if (!confirm("Se descartan los cambios no descargados y se vuelve a lo que hay en productos.js. ¿Continuar?")) return;
+      if (!confirm("Se descartan los cambios que no hayas guardado y se vuelve\n" +
+                   "al catálogo que está publicado. ¿Continuar?")) return;
       lista = JSON.parse(JSON.stringify(PRODUCTOS));
       try { localStorage.removeItem(CLAVE); } catch (e) { /* ignorar */ }
+      hayCambiosSinGuardar = false;
       limpiarFormulario();
       pintarTabla();
+      pintarAviso();
     });
 
     $("#filtroAdmin").addEventListener("input", pintarTabla);
@@ -317,10 +526,16 @@
     $("#fArchivo").addEventListener("change", (e) => {
       const archivo = e.target.files[0];
       if (!archivo) return;
-      $("#fImagen").value = "img/" + archivo.name;
-      if (urlPrevia) URL.revokeObjectURL(urlPrevia);
-      urlPrevia = URL.createObjectURL(archivo);
-      pintarPrevia("", urlPrevia);
+      if (modoServidor) {
+        subirFoto(archivo);
+      } else {
+        // Sin servidor solo podemos anotar el nombre y mostrar una vista previa.
+        $("#fImagen").value = "img/" + archivo.name;
+        if (urlPrevia) URL.revokeObjectURL(urlPrevia);
+        urlPrevia = URL.createObjectURL(archivo);
+        pintarPrevia("", urlPrevia);
+      }
+      e.target.value = "";
     });
 
     $("#tabla").addEventListener("click", (e) => {
@@ -330,16 +545,12 @@
       if (bo) return borrar(bo.dataset.borrar);
     });
 
-    // Avisa si hay un borrador con cambios sin descargar.
-    if (cargarBorrador()) {
-      const banner = document.createElement("div");
-      banner.className = "aviso";
-      banner.innerHTML =
-        "<strong>Tienes cambios sin publicar</strong>" +
-        "Se recuperó tu último borrador guardado en este navegador. " +
-        "Recuerda pulsar «Descargar productos.js» para que se vean en la tienda.";
-      document.querySelector("main").insertBefore(banner, document.querySelector(".barra-admin"));
-    }
+    // Evita cerrar la pestana con ediciones a medio guardar.
+    window.addEventListener("beforeunload", (e) => {
+      if (!hayCambiosSinGuardar) return;
+      e.preventDefault();
+      e.returnValue = "";
+    });
   }
 
   document.addEventListener("DOMContentLoaded", iniciar);
