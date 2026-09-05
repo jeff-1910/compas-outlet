@@ -52,11 +52,17 @@ Write-Output "  =================================================="
 Write-Output "   PANEL DE COMPAS OUTLET"
 Write-Output "  =================================================="
 Write-Output ""
-Write-Output "   Abierto en: ${prefijo}admin.html"
+Write-Output "   Ya esta abierto en tu navegador."
+Write-Output "   Si no se abrio solo, entra a:"
+Write-Output "   ${prefijo}admin.html"
 Write-Output ""
 Write-Output "   NO CIERRES ESTA VENTANA mientras uses el panel."
 Write-Output "   Para terminar: cerra esta ventana."
 Write-Output ""
+
+# El navegador se abre aqui, no en el .cmd: si se abriera antes de que el
+# servidor este escuchando, el usuario veria un error de conexion.
+Start-Process "${prefijo}admin.html"
 
 # --- utilidades -----------------------------------------------------------
 
