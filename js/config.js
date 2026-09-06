@@ -43,6 +43,21 @@ const CONFIG = {
   // --- Moneda ---
   // Colon costarricense. Si trabajas en dolares, pon "$", decimales: 2
   // y locale: "es-CR" igual funciona.
+  // --- Panel en linea (Supabase) ---
+  // Con esto lleno, el catalogo se lee y se edita desde internet, y podes
+  // administrar la tienda desde el celular. Si queda vacio, la tienda usa
+  // el catalogo guardado en js/productos.js y todo sigue funcionando.
+  //
+  // Los dos valores salen de tu proyecto de Supabase:
+  //   Project Settings -> API -> "Project URL" y "anon public"
+  //
+  // La clave "anon" es publica a proposito: sirve solo para LEER. Para
+  // agregar o borrar hay que iniciar sesion con tu correo y contrasena.
+  supabase: {
+    url: "",       // ej: "https://abcdefgh.supabase.co"
+    anonKey: "",   // la clave larga que dice "anon public"
+  },
+
   simboloMoneda: "₡",   // el simbolo del colon
   decimales: 0,              // 0 para colones, 2 para dolares
 

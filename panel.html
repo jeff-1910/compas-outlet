@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel | Compas Outlet</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23ffffff'/%3E%3Crect x='10' y='38' width='33' height='26' rx='9' fill='%23ce1126'/%3E%3Crect x='57' y='38' width='33' height='26' rx='9' fill='%230f2a66'/%3E%3Cg stroke='%23ce1126' stroke-width='5' stroke-linecap='round'%3E%3Cpath d='M50 20 v9 M50 80 v-9'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+  /* ------------------------------------------------- Pantalla de ingreso */
+  .ingreso {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px 18px;
+    background:
+      radial-gradient(900px 400px at 80% -10%, rgba(206,17,38,.28), transparent 60%),
+      linear-gradient(160deg, var(--azul-800), var(--azul-900));
+  }
+  .ingreso__caja {
+    background: var(--surface);
+    border-radius: 18px;
+    box-shadow: var(--shadow-lg);
+    padding: 30px 26px 26px;
+    width: min(400px, 100%);
+  }
+  .ingreso__logo { display: block; height: 48px; margin: 0 auto 20px; }
+  .ingreso h1 { font-size: 20px; margin: 0 0 4px; text-align: center; }
+  .ingreso p.sub { margin: 0 0 22px; font-size: 14px; color: var(--text-muted); text-align: center; }
+
+  /* -------------------------------------------------------- Formularios */
+  .campo { margin-bottom: 14px; }
+  .campo label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+  .campo .pista { font-weight: 400; color: var(--text-muted); font-size: 12px; }
+  .campo input, .campo textarea, .campo select {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 16px;           /* 16px evita que el iPhone haga zoom al tocar */
+    min-width: 0;
+  }
+  .campo textarea { resize: vertical; min-height: 80px; }
+  .campo input:focus, .campo textarea:focus, .campo select:focus {
+    outline: 2px solid var(--rojo); outline-offset: -1px; background: var(--surface);
+  }
+  .dos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .dos > * { min-width: 0; }
+  .check { display: flex; align-items: center; gap: 9px; font-size: 15px; margin-bottom: 16px; }
+  .check input { accent-color: var(--rojo); width: 18px; height: 18px; }
+
+  .error {
+    background: var(--rojo-suave);
+    border: 1px solid var(--rojo);
+    color: var(--rojo-oscuro);
+    border-radius: var(--radius-sm);
+    padding: 11px 13px;
+    font-size: 13.5px;
+    margin-bottom: 14px;
+  }
+  :root[data-tema="oscuro"] .error { color: #ffb3bd; }
+
+  /* ------------------------------------------------------------- Trabajo */
+  .cabecera-panel {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 30;
+    box-shadow: var(--shadow-sm);
+  }
+  .cabecera-panel__fila {
+    display: flex; align-items: center; gap: 14px;
+    height: 62px;
+  }
+  .cabecera-panel__fila .logo__img { height: 38px; }
+  .quien { margin-left: auto; font-size: 13px; color: var(--text-muted); }
+  @media (max-width: 620px) { .quien { display: none; } }
+
+  .trabajo { display: grid; grid-template-columns: 380px 1fr; gap: 22px; align-items: start; }
+  @media (max-width: 940px) { .trabajo { grid-template-columns: 1fr; } }
+  .trabajo > * { min-width: 0; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .panel h2 { margin: 0 0 4px; font-size: 18px; }
+  .panel > p.sub { margin: 0 0 18px; font-size: 13.5px; color: var(--text-muted); }
+
+  .previa {
+    width: 100%; aspect-ratio: 4/3;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    display: grid; place-items: center;
+    overflow: hidden; margin-bottom: 10px;
+    font-size: 12.5px; color: var(--text-muted);
+    text-align: center; padding: 10px;
+  }
+  .previa img { width: 100%; height: 100%; object-fit: contain; }
+
+  /* Lista de articulos: tarjetas en movil, filas en escritorio */
+  .articulo {
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    gap: 13px;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .articulo__foto {
+    width: 56px; height: 56px; border-radius: 9px;
+    background: var(--surface-2);
+    display: grid; place-items: center;
+    overflow: hidden; font-size: 22px;
+  }
+  .articulo__foto img { width: 100%; height: 100%; object-fit: cover; }
+  .articulo__nombre { font-weight: 600; font-size: 14.5px; margin: 0 0 2px; line-height: 1.3; }
+  .articulo__meta { font-size: 12.5px; color: var(--text-muted); }
+  .articulo__meta b { color: var(--text); font-weight: 600; }
+  .articulo__acc { display: flex; gap: 6px; }
+  .articulo__acc button {
+    border: 1px solid var(--border); background: var(--bg); color: var(--text);
+    border-radius: 7px; padding: 7px 11px; font-size: 13px;
+  }
+  .articulo__acc button:hover { background: var(--surface-2); }
+  .articulo__acc .borrar:hover { background: var(--rojo); color: #fff; border-color: var(--rojo); }
+
+  .barra-panel { display: flex; gap: 9px; flex-wrap: wrap; margin-bottom: 18px; }
+  .cargando { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<!-- ======================================================= Pantalla de login -->
+<div class="ingreso" id="pantallaIngreso">
+  <div class="ingreso__caja">
+    <img class="ingreso__logo" src="img/logo.jpg" alt="Compas Outlet">
+    <h1>Panel de la tienda</h1>
+    <p class="sub">Entra para cargar y editar tus artículos</p>
+
+    <div class="error oculto" id="errorIngreso"></div>
+
+    <form id="formIngreso">
+      <div class="campo">
+        <label for="correo">Correo</label>
+        <input type="email" id="correo" autocomplete="username" required>
+      </div>
+      <div class="campo">
+        <label for="clave">Contraseña</label>
+        <input type="password" id="clave" autocomplete="current-password" required>
+      </div>
+      <button class="btn btn--primario btn--bloque" type="submit" id="btnEntrar">Entrar</button>
+    </form>
+
+    <p class="sub" style="margin:18px 0 0;font-size:12.5px">
+      <a href="index.html" style="text-decoration:underline">← Volver a la tienda</a>
+    </p>
+  </div>
+</div>
+
+<!-- ====================================================== Pantalla de trabajo -->
+<div class="oculto" id="pantallaTrabajo">
+
+  <header class="cabecera-panel">
+    <div class="contenedor cabecera-panel__fila">
+      <img class="logo__img" src="img/logo.jpg" alt="Compas Outlet">
+      <strong style="font-size:16px">Panel</strong>
+      <span class="quien" id="quien"></span>
+      <button class="btn btn--claro" id="btnSalir" style="padding:8px 14px;font-size:13.5px">Salir</button>
+    </div>
+  </header>
+
+  <main class="contenedor" style="padding-top:22px;padding-bottom:50px">
+
+    <div class="barra-panel">
+      <button class="btn btn--primario" id="btnNuevo">+ Artículo nuevo</button>
+      <a class="btn btn--claro" href="index.html" target="_blank">Ver tienda</a>
+      <button class="btn btn--claro" id="btnRecargar">Actualizar lista</button>
+    </div>
+
+    <div class="trabajo">
+
+      <form class="panel" id="formulario">
+        <h2 id="tituloForm">Nuevo artículo</h2>
+        <p class="sub">Los cambios se ven en la tienda al instante.</p>
+
+        <div class="error oculto" id="errorForm"></div>
+        <input type="hidden" id="fId">
+
+        <div class="campo">
+          <label for="fNombre">Nombre del artículo *</label>
+          <input type="text" id="fNombre" required placeholder="Ej: Butaca de cuero capitoneada">
+        </div>
+
+        <div class="campo">
+          <label for="fCategoria">Categoría *</label>
+          <select id="fCategoria" required></select>
+        </div>
+
+        <div class="dos">
+          <div class="campo">
+            <label for="fPrecio">Precio <span class="pista">(0 = «Consultar»)</span></label>
+            <input type="number" id="fPrecio" step="1" min="0" inputmode="numeric" placeholder="0">
+          </div>
+          <div class="campo">
+            <label for="fPrecioAntes">Precio anterior <span class="pista">(0 = sin oferta)</span></label>
+            <input type="number" id="fPrecioAntes" step="1" min="0" inputmode="numeric" value="0">
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="fStock">Cantidad <span class="pista">(0 = agotado)</span></label>
+          <input type="number" id="fStock" min="0" step="1" inputmode="numeric" value="1">
+        </div>
+
+        <div class="campo">
+          <label>Foto</label>
+          <div class="previa" id="previa">Sin foto</div>
+          <input type="file" id="fArchivo" accept="image/*" style="display:none">
+          <button type="button" class="btn btn--claro btn--bloque" id="btnFoto">Elegir foto…</button>
+          <button type="button" class="btn btn--claro btn--bloque oculto" id="btnQuitarFoto" style="margin-top:7px">Quitar foto</button>
+          <input type="hidden" id="fImagen">
+          <p class="pista" style="margin:8px 0 0">
+            Se sube sola y se optimiza: una foto del celular queda liviana.
+          </p>
+        </div>
+
+        <div class="campo">
+          <label for="fDescripcion">Descripción</label>
+          <textarea id="fDescripcion" placeholder="Material, medidas, colores, qué incluye..."></textarea>
+        </div>
+
+        <div class="campo">
+          <label for="fEtiquetas">Palabras para el buscador <span class="pista">(separadas por coma)</span></label>
+          <input type="text" id="fEtiquetas" placeholder="butaca, sala, cuero">
+        </div>
+
+        <label class="check">
+          <input type="checkbox" id="fDestacado">
+          Mostrar en «Lo más buscado» de la portada
+        </label>
+
+        <button class="btn btn--primario btn--bloque" type="submit" id="btnGuardar">Guardar artículo</button>
+        <button class="btn btn--claro btn--bloque" type="button" id="btnCancelar" style="margin-top:8px">Limpiar formulario</button>
+      </form>
+
+      <div class="panel">
+        <h2>Tus artículos (<span id="conteo">0</span>)</h2>
+        <p class="sub">Toca «Editar» para modificar uno.</p>
+
+        <div class="campo" style="margin-bottom:14px">
+          <input type="text" id="filtro" placeholder="Filtrar por nombre o categoría...">
+        </div>
+
+        <div id="listado"><div class="cargando">Cargando…</div></div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/productos.js"></script>
+<script src="js/datos.js"></script>
+<script src="js/panel.js"></script>
+</body>
+</html>

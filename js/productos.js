@@ -5,7 +5,7 @@
    Puedes editar a mano o volver a usar admin.html.
    ========================================================================= */
 
-const CATEGORIAS = [
+var CATEGORIAS = [
   {
     "id": "muebles",
     "nombre": "Muebles",
@@ -43,7 +43,7 @@ const CATEGORIAS = [
   }
 ];
 
-const PRODUCTOS = [
+var PRODUCTOS = [
   {
     id: 1,
     nombre: "Butaca de cuero capitoneada",

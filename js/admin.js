@@ -303,10 +303,10 @@
       "   ========================================================================= */\n\n";
 
     const cats =
-      "const CATEGORIAS = " + JSON.stringify(CATEGORIAS, null, 2) + ";\n\n";
+      "var CATEGORIAS = " + JSON.stringify(CATEGORIAS, null, 2) + ";\n\n";
 
     const prods =
-      "const PRODUCTOS = [\n" +
+      "var PRODUCTOS = [\n" +
       lista
         .map(
           (p) =>

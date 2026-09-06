@@ -169,18 +169,8 @@
       );
     }).join("");
 
-    cont.addEventListener("click", (e) => {
-      const a = e.target.closest("[data-cat]");
-      if (!a) return;
-      filtroCategoria = a.dataset.cat;
-      visibles = 12;
-      sincronizarChips();
-      pintarCatalogo();
-    });
-
     // Chips de filtro
-    const chips = $("#chips");
-    chips.innerHTML =
+    $("#chips").innerHTML =
       '<button class="chip" data-chip="todos" aria-pressed="true">Todos</button>' +
       CATEGORIAS.map(
         (c) =>
@@ -188,14 +178,18 @@
           c.icono + " " + escapar(c.nombre) + "</button>"
       ).join("");
 
-    chips.addEventListener("click", (e) => {
-      const b = e.target.closest("[data-chip]");
-      if (!b) return;
-      filtroCategoria = b.dataset.chip;
-      visibles = 12;
-      sincronizarChips();
-      pintarCatalogo();
-    });
+    sincronizarChips();
+  }
+
+  // Vuelve a dibujar todo lo que depende del catalogo. Se usa cuando llegan
+  // los datos del panel en linea despues de haber pintado los locales.
+  function repintar() {
+    pintarCategorias();
+    pintarDestacados();
+    pintarCatalogo();
+    persistir();
+    $("#totalProductos").textContent = PRODUCTOS.length;
+    $("#totalCategorias").textContent = CATEGORIAS.length;
   }
 
   function sincronizarChips() {
@@ -656,6 +650,26 @@
       }
     });
 
+    // Categorias y chips: delegacion en el contenedor, asi siguen
+    // funcionando aunque se vuelva a dibujar la lista.
+    $("#categorias").addEventListener("click", (e) => {
+      const a = e.target.closest("[data-cat]");
+      if (!a) return;
+      filtroCategoria = a.dataset.cat;
+      visibles = 12;
+      sincronizarChips();
+      pintarCatalogo();
+    });
+
+    $("#chips").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-chip]");
+      if (!b) return;
+      filtroCategoria = b.dataset.chip;
+      visibles = 12;
+      sincronizarChips();
+      pintarCatalogo();
+    });
+
     // Buscador
     $("#busqueda").addEventListener("input", (e) => {
       filtroTexto = e.target.value;
@@ -724,6 +738,10 @@
     aplicarTema(t.tema, t.recordar);
     iconosEstaticos();
     pintarDatosNegocio();
+
+    // Se dibuja YA con el catalogo que viene en la pagina. Asi la tienda
+    // nunca queda en blanco, ni siquiera si el panel en linea tarda o no
+    // responde.
     pintarCategorias();
     pintarDestacados();
     pintarCatalogo();
@@ -732,6 +750,13 @@
 
     $("#totalProductos").textContent = PRODUCTOS.length;
     $("#totalCategorias").textContent = CATEGORIAS.length;
+
+    // Y si hay panel en linea, cuando lleguen sus datos se vuelve a dibujar.
+    if (typeof CO_DATOS !== "undefined" && CO_DATOS.configurado()) {
+      CO_DATOS.cargar().then((r) => {
+        if (r && r.origen === "supabase") repintar();
+      });
+    }
   }
 
   document.addEventListener("DOMContentLoaded", iniciar);

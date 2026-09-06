@@ -59,44 +59,44 @@ Ahora hay **3 artículos**, sacados de las fotos de tu Instagram (la butaca, la
 caja fuerte y el librero hexagonal). Les faltan los nombres exactos y los
 precios. Tienes 54 publicaciones más por subir.
 
-### Opción A — el panel (es la buena)
+### Opción A — el panel en línea (la buena)
 
-**Doble clic en `administrar.cmd`.**
+Entrá desde el celular o cualquier computadora a:
 
-Se abre una ventana negra (el motor del panel) y el navegador con el panel.
-**No cierres la ventana negra** mientras trabajas: si la cierras, el panel deja
-de poder guardar.
+**https://compas-outlet.vercel.app/panel.html**
 
-Dentro del panel:
+Con tu correo y contraseña. Cargás el artículo, elegís la foto de la galería,
+*Guardar artículo*, y aparece en la tienda **al instante**. Sin publicar nada,
+sin ventanas negras.
 
-1. Llenas el formulario y pulsas *Guardar artículo*. Repites con cada producto.
-2. Cuando termines la tanda, pulsas **«Guardar en la tienda»** — ahí se
-   escriben de verdad en tu página.
-3. *Ver tienda* para revisar cómo quedó.
-4. **«Publicar en internet»** y en menos de un minuto está en
-   `compas-outlet.vercel.app`.
+> **Hay que activarlo una vez.** Seguí los 5 pasos de
+> [PANEL-EN-LINEA.md](PANEL-EN-LINEA.md) — unos 15 minutos, y no se repite.
 
-Las fotos se suben solas: eliges la foto y el panel la guarda en `img/` ya
-achicada y optimizada. Una foto de celular de 5 MB queda en unos 20 KB, sin que
-tengas que hacer nada.
+Consejos para cargar muchos seguidos:
 
-Consejos para cargar muchos de una vez:
+- La categoría queda puesta después de guardar y el cursor vuelve al nombre.
+- Las fotos se achican solas antes de subirse: una del celular de 4 MB queda
+  liviana y la tienda no se pone lenta.
+- Poné **0** en el precio y el artículo sale como «Consultar precio», con un
+  botón de WhatsApp. Útil si todavía no lo definiste.
+- Los 3 artículos de ejemplo los podés editar con datos reales o borrarlos.
 
-- La categoría se queda puesta después de guardar y el cursor vuelve al nombre,
-  para que metas todos los muebles seguidos sin volver a elegir "Muebles".
-- Pulsa «Guardar en la tienda» cada 10 o 15 artículos, no solo al final.
-- Los 3 artículos de ejemplo (butaca, caja fuerte, librero) los puedes editar
-  con sus datos reales o borrarlos. La página funciona igual con el catálogo
-  vacío.
-- Al guardar, el catálogo anterior queda como `js/productos-anterior.js` por si
-  necesitas volver atrás.
+### Opción B — el panel de la computadora (respaldo)
 
-> **Ojo:** si abres `admin.html` haciendo doble clic, o entras a
-> `compas-outlet.vercel.app/admin.html`, el panel arranca en **modo solo
-> lectura**: te avisa arriba en rojo y lo que edites ahí no llega a la tienda.
-> Siempre entra por `administrar.cmd`.
+**Doble clic en «Panel Compas Outlet»** (el acceso directo del Escritorio).
+Se abre una ventana negra y el navegador con el panel.
 
-### Opción B — a mano
+Este edita el archivo `js/productos.js` y hay que pulsar *Publicar en
+internet* para que se vea. Queda como respaldo hasta confirmar que el panel en
+línea funciona; después lo retiramos para no tener dos.
+
+> **Ojo:** si abrís `admin.html` con doble clic, arranca en **modo solo
+> lectura** y lo que edites no llega a la tienda. Entrá siempre por el acceso
+> directo.
+
+### Opción C — a mano en el archivo
+
+(Solo aplica al catálogo local de respaldo, no al panel en línea.)
 
 Abre `js/productos.js` y copia un bloque, cambiando los valores:
 
@@ -127,9 +127,12 @@ prefieres cotizar en privado. Esos artículos no entran al carrito.
 
 ## Las fotos
 
-Desde el panel no tienes que hacer nada: eliges la foto y se guarda sola en
-`img/`, ya achicada a 1200 px y comprimida. También le limpia el nombre
-(`Foto WhatsApp ÑÁ.PNG` queda como `foto-whatsapp-na.jpg`).
+No tienes que hacer nada: eliges la foto y el panel la achica a 1200 px y la
+comprime antes de guardarla. Una del celular de 4 MB queda en unos 200 KB.
+
+- Desde el **panel en línea**, la foto se guarda en la nube y la tienda la
+  toma de ahí.
+- Desde el **panel de la computadora**, se guarda en la carpeta `img/`.
 
 Consejos:
 - Cuadradas (1:1) se ven mejor en la cuadrícula.
@@ -179,20 +182,27 @@ El `.vercel.app` que ya tienes es permanente y gratis, así que no hay apuro.
 
 ```
 pagina weeb/
-├── administrar.cmd    ← DOBLE CLIC AQUÍ para cargar artículos
-├── index.html         La tienda
-├── admin.html         El panel (no lo abras directo: usa administrar.cmd)
-├── servidor-admin.ps1 El motor del panel
-├── publicar.cmd       Publicar sin abrir el panel (por si editas a mano)
+├── panel.html            El panel en línea (se abre desde internet)
+├── PANEL-EN-LINEA.md     ← cómo activarlo, paso a paso
+├── index.html            La tienda
+├── supabase/
+│   └── configuracion.sql El SQL a pegar en Supabase (una sola vez)
 ├── css/
-│   └── estilos.css    Colores y diseño
+│   └── estilos.css       Colores y diseño
 ├── js/
-│   ├── config.js      ← tus datos (WhatsApp, redes, moneda)
-│   ├── productos.js   ← tu catálogo
-│   ├── tienda.js      Funcionamiento de la tienda
-│   └── admin.js       Funcionamiento del panel
-└── img/               ← tu logo.jpg y las fotos de los productos
+│   ├── config.js         ← tus datos (WhatsApp, redes, moneda, Supabase)
+│   ├── datos.js          De dónde saca el catálogo la tienda
+│   ├── panel.js          Funcionamiento del panel en línea
+│   ├── productos.js      Catálogo de respaldo (si falla la conexión)
+│   └── tienda.js         Funcionamiento de la tienda
+├── img/                  Tu logo y las fotos del panel de la computadora
+│
+│   -- respaldo, hasta confirmar que el panel en línea anda --
+├── administrar.cmd       Abre el panel de la computadora
+├── admin.html            Ese panel (no lo abras directo)
+├── servidor-admin.ps1    Su motor
+└── publicar.cmd          Publicar sin abrir el panel
 ```
 
-El panel y las herramientas locales no se publican en internet: los excluye
-`.vercelignore`. En tu sitio solo queda la tienda.
+Lo que solo sirve en tu computadora no se publica en internet: lo excluye
+`.vercelignore`. En tu sitio quedan la tienda y el panel en línea.
