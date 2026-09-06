@@ -62,24 +62,66 @@
     if (/Failed to fetch|NetworkError/i.test(m)) return "Sin conexión. Revisa tu internet.";
     if (/row-level security|violates/i.test(m)) return "No tienes permiso para ese cambio. Vuelve a entrar.";
     if (/JWT|token/i.test(m)) return "Tu sesión venció. Vuelve a entrar.";
+    if (/User already registered|already been registered/i.test(m))
+      return "Ese correo ya tiene cuenta. Usa «Ya tengo cuenta» para entrar.";
+    if (/Password should be at least/i.test(m)) return "La contraseña es muy corta: mínimo 6 caracteres.";
+    if (/Signups not allowed|signup is disabled/i.test(m))
+      return "El registro está desactivado en Supabase. Avísame y lo resolvemos.";
     return m;
   }
 
   /* ------------------------------------------------------------- Ingreso */
 
+  // El formulario sirve para entrar y para crear la cuenta la primera vez.
+  var modoCrear = false;
+
+  function cambiarModo(crear) {
+    modoCrear = crear;
+    mostrarError("#errorIngreso", "");
+    $("#avisoIngreso").classList.add("oculto");
+    $("#btnEntrar").textContent = crear ? "Crear mi cuenta" : "Entrar";
+    $("#btnVolverEntrar").classList.toggle("oculto", !crear);
+    $("#enlaceCrear").classList.toggle("oculto", crear);
+    $("#clave").setAttribute("autocomplete", crear ? "new-password" : "current-password");
+    document.querySelector(".ingreso p.sub").textContent = crear
+      ? "Elige el correo y la contraseña con los que vas a entrar"
+      : "Entra para cargar y editar tus artículos";
+  }
+
   async function entrar(e) {
     e.preventDefault();
     mostrarError("#errorIngreso", "");
+    $("#avisoIngreso").classList.add("oculto");
+
+    var correo = $("#correo").value.trim();
+    var clave = $("#clave").value;
     var boton = $("#btnEntrar");
-    ocupado(boton, "Entrando…");
+
+    if (modoCrear && clave.length < 6) {
+      return mostrarError("#errorIngreso", "La contraseña tiene que tener al menos 6 caracteres.");
+    }
+
+    ocupado(boton, modoCrear ? "Creando…" : "Entrando…");
     try {
-      var r = await sb.auth.signInWithPassword({
-        email: $("#correo").value.trim(),
-        password: $("#clave").value,
-      });
+      var r = modoCrear
+        ? await sb.auth.signUp({ email: correo, password: clave })
+        : await sb.auth.signInWithPassword({ email: correo, password: clave });
       if (r.error) throw r.error;
+
+      // Con la confirmacion por correo activada, signUp no devuelve sesion.
+      if (modoCrear && !(r.data && r.data.session)) {
+        $("#avisoIngreso").innerHTML =
+          "<b>Cuenta creada.</b> Te mandamos un correo a <b>" + escapar(correo) +
+          "</b> para confirmarla. Ábrelo, pulsa el enlace y vuelve aquí a entrar. " +
+          "Si no lo ves, revisa la carpeta de correo no deseado.";
+        $("#avisoIngreso").classList.remove("oculto");
+        cambiarModo(false);
+        $("#avisoIngreso").classList.remove("oculto");
+        return;
+      }
+
       $("#clave").value = "";
-      await mostrarTrabajo(r.data.user);
+      await mostrarTrabajo((r.data.user) || (r.data.session && r.data.session.user));
     } catch (err) {
       mostrarError("#errorIngreso", enCastellano(err));
     } finally {
@@ -385,6 +427,11 @@
     }
 
     $("#formIngreso").addEventListener("submit", entrar);
+    $("#enlaceCrear").addEventListener("click", function (e) {
+      e.preventDefault();
+      cambiarModo(true);
+    });
+    $("#btnVolverEntrar").addEventListener("click", function () { cambiarModo(false); });
     $("#btnSalir").addEventListener("click", salir);
     $("#formulario").addEventListener("submit", guardar);
     $("#btnCancelar").addEventListener("click", function () { limpiarFormulario(); });

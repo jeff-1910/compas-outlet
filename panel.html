@@ -64,6 +64,18 @@
   }
   :root[data-tema="oscuro"] .error { color: #ffb3bd; }
 
+  .aviso-ok {
+    background: #e8f6ee;
+    border: 1px solid var(--green);
+    color: #14603a;
+    border-radius: var(--radius-sm);
+    padding: 11px 13px;
+    font-size: 13.5px;
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+  :root[data-tema="oscuro"] .aviso-ok { background: #10301f; color: #8ee0b0; }
+
   /* ------------------------------------------------------------- Trabajo */
   .cabecera-panel {
     background: var(--surface);
@@ -146,6 +158,7 @@
     <p class="sub">Entra para cargar y editar tus artículos</p>
 
     <div class="error oculto" id="errorIngreso"></div>
+    <div class="aviso-ok oculto" id="avisoIngreso"></div>
 
     <form id="formIngreso">
       <div class="campo">
@@ -157,9 +170,13 @@
         <input type="password" id="clave" autocomplete="current-password" required>
       </div>
       <button class="btn btn--primario btn--bloque" type="submit" id="btnEntrar">Entrar</button>
+      <button class="btn btn--claro btn--bloque oculto" type="button" id="btnVolverEntrar" style="margin-top:8px">Ya tengo cuenta</button>
     </form>
 
-    <p class="sub" style="margin:18px 0 0;font-size:12.5px">
+    <p class="sub" style="margin:16px 0 0;font-size:13px">
+      <a href="#" id="enlaceCrear" style="text-decoration:underline">¿Primera vez? Crear mi cuenta</a>
+    </p>
+    <p class="sub" style="margin:10px 0 0;font-size:12.5px">
       <a href="index.html" style="text-decoration:underline">← Volver a la tienda</a>
     </p>
   </div>
