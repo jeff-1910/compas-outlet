@@ -49,13 +49,14 @@ const CONFIG = {
   // el catalogo guardado en js/productos.js y todo sigue funcionando.
   //
   // Los dos valores salen de tu proyecto de Supabase:
-  //   Project Settings -> API -> "Project URL" y "anon public"
+  //   Project Settings -> API Keys -> "Project URL" y la clave publicable
   //
-  // La clave "anon" es publica a proposito: sirve solo para LEER. Para
-  // agregar o borrar hay que iniciar sesion con tu correo y contrasena.
+  // La clave publicable (sb_publishable_...) es publica a proposito: sirve
+  // solo para LEER. Para agregar o borrar hay que iniciar sesion.
+  // NUNCA pongas aqui la clave secreta (sb_secret_...).
   supabase: {
-    url: "",       // ej: "https://abcdefgh.supabase.co"
-    anonKey: "",   // la clave larga que dice "anon public"
+    url: "https://bthczvrkrnzzwlnqunlh.supabase.co",
+    anonKey: "sb_publishable_jxwBsbIkHkoIgTjrlT1jjg_LZj8IkN1",
   },
 
   simboloMoneda: "₡",   // el simbolo del colon
