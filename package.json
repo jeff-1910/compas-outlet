@@ -1,0 +1,10 @@
+{
+  "name": "compas-outlet",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tienda de articulos varios Compas Outlet, con asistente de ventas",
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.124.0"
+  }
+}
