@@ -22,7 +22,7 @@ const MAX_TOKENS = 8000;        // techo de la respuesta (incluye razonamiento)
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://bthczvrkrnzzwlnqunlh.supabase.co";
 const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || "sb_publishable_jxwBsbIkHkoIgTjrlT1jjg_LZj8IkN1";
 
-const WHATSAPP = "50670090544";
+const WHATSAPP = "50670431317"; // el bot de WhatsApp, no el telefono del equipo
 const MONEDA = "₡";
 
 /* ------------------------------------------------------------- Catalogo */

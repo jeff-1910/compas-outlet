@@ -23,7 +23,8 @@ const CONFIG = {
   // --- Contacto ---
   // Numero de WhatsApp en formato internacional, SOLO digitos, sin + ni espacios.
   // Costa Rica: 506 + los 8 digitos.
-  whatsapp: "50670090544",
+  // Es el numero del bot: contesta solo, 24 horas, y anota los leads en la hoja.
+  whatsapp: "50670431317",
 
   // Enlace de invitacion a tu grupo de WhatsApp (el de tu bio de Instagram).
   // En la captura salia cortado: "chat.whatsapp.com/HyBRK7wvDPTB1DnM3Sto..."
