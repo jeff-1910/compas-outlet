@@ -158,9 +158,9 @@
     // Si la funcion del servidor no responde, no mostramos nada: mejor sin
     // chat que con un boton que da error.
     try {
-      var prueba = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-      // 400 = viva pero sin mensajes (lo esperado). 503 = falta la clave.
-      if (prueba.status === 503 || prueba.status === 404 || prueba.status === 405) return;
+      var prueba = await fetch("/api/chat", { method: "GET" });
+      // 204 = listo. Cualquier otra cosa (503 sin clave, 404 sin funcion): no se muestra.
+      if (!prueba.ok) return;
     } catch (e) {
       return;
     }

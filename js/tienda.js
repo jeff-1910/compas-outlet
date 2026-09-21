@@ -228,6 +228,9 @@
       : 0;
 
   // Marcador que se muestra cuando no hay foto o la ruta esta mal escrita.
+  // Lo ve el CLIENTE, no el administrador: tiene que invitar a escribir, no
+  // pedir que alguien suba la foto.
+  const SIN_FOTO = "Pide fotos por WhatsApp";
   function marcador(p, texto) {
     return (
       '<div class="sin-foto"><span>' + catIcono(p.categoria) +
@@ -241,7 +244,7 @@
     const p = PRODUCTOS.find((x) => x.id === Number(img.dataset.pid));
     img.parentNode.insertAdjacentHTML(
       "afterbegin",
-      marcador(p || { categoria: "otros" }, "Foto no encontrada")
+      marcador(p || { categoria: "otros" }, SIN_FOTO)
     );
     img.remove();
   };
@@ -253,7 +256,7 @@
         '" data-pid="' + p.id + '" loading="lazy" onerror="__coFotoFallo(this)">'
       );
     }
-    return marcador(p, "Agrega una foto");
+    return marcador(p, SIN_FOTO);
   }
 
   function tarjeta(p) {

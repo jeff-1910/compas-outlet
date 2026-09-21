@@ -116,6 +116,13 @@ ${catalogo}`;
 /* ------------------------------------------------------------- Endpoint */
 
 export default async function handler(req, res) {
+  // La burbuja pregunta con GET si el asistente esta vivo antes de mostrarse.
+  // 204 = listo, 503 = falta la clave. Asi no hace falta un POST vacio que
+  // deja un error rojo en la consola en cada visita.
+  if (req.method === "GET") {
+    return res.status(process.env.ANTHROPIC_API_KEY ? 204 : 503).end();
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Usa POST" });
   }
