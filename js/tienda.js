@@ -58,6 +58,9 @@
     lupa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>',
     wa: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.69.63.71.22 1.36.19 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.42-.07-.13-.27-.2-.57-.35M12 2a10 10 0 0 0-8.53 15.26L2 22l4.85-1.42A10 10 0 1 0 12 2m0 1.67a8.32 8.32 0 0 1 6.6 13.4 8.32 8.32 0 0 1-11.9 1.16l-.35-.28-2.87.84.85-2.8-.3-.36A8.32 8.32 0 0 1 12 3.67"/></svg>',
     mas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+    foto: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>',
+    video: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+    compartir: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>',
     menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>',
     sol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
     luna: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8"/></svg>',
@@ -249,14 +252,131 @@
     img.remove();
   };
 
+  // Fotos y videos del articulo, en orden. Vale tambien para el catalogo
+  // local de productos.js, que solo trae una foto.
+  const mediosDe = (p) =>
+    typeof CO_DATOS !== "undefined"
+      ? CO_DATOS.mediosDe(p)
+      : p.imagen ? [{ tipo: "imagen", url: p.imagen }] : [];
+
+  // Portada de la tarjeta: la primera foto. Si el articulo solo tiene video,
+  // se muestra el primer cuadro del video.
   function figura(p) {
-    if (p.imagen) {
-      return (
-        '<img src="' + escapar(p.imagen) + '" alt="' + escapar(p.nombre) +
-        '" data-pid="' + p.id + '" loading="lazy" onerror="__coFotoFallo(this)">'
-      );
+    const medios = mediosDe(p);
+    const foto = medios.find((m) => m.tipo === "imagen");
+    const video = medios.find((m) => m.tipo === "video");
+    let portada;
+    if (foto) {
+      portada =
+        '<img src="' + escapar(foto.url) + '" alt="' + escapar(p.nombre) +
+        '" data-pid="' + p.id + '" loading="lazy" onerror="__coFotoFallo(this)">';
+    } else if (video) {
+      portada =
+        '<video src="' + escapar(video.url) + '#t=0.1" muted playsinline preload="metadata"' +
+        ' data-pid="' + p.id + '" onerror="__coFotoFallo(this)"></video>';
+    } else {
+      return marcador(p, SIN_FOTO);
     }
-    return marcador(p, SIN_FOTO);
+    return portada + cuentaMedios(medios);
+  }
+
+  // Sobre la portada: cuantas fotos hay y si hay video. Invita a abrir la
+  // ficha, que es donde esta la galeria completa.
+  function cuentaMedios(medios) {
+    const fotos = medios.filter((m) => m.tipo === "imagen").length;
+    const videos = medios.length - fotos;
+    if (medios.length < 2 && !videos) return "";
+    return (
+      '<span class="galeria-cuenta">' +
+        (fotos ? "<span>" + ICO.foto + fotos + "</span>" : "") +
+        (videos ? "<span>" + ICO.video + (videos > 1 ? videos : "Video") + "</span>" : "") +
+      "</span>"
+    );
+  }
+
+  // Galeria de la ficha: fotos y videos que se deslizan con el dedo.
+  function galeria(p) {
+    const medios = mediosDe(p);
+    if (!medios.length) return marcador(p, SIN_FOTO);
+    const varios = medios.length > 1;
+    const items = medios.map((m, i) =>
+      '<div class="galeria__item">' +
+        (m.tipo === "video"
+          ? '<video src="' + escapar(m.url) + '" controls playsinline preload="metadata"></video>'
+          : '<img src="' + escapar(m.url) + '" alt="' + escapar(p.nombre) +
+            (varios ? " (" + (i + 1) + " de " + medios.length + ")" : "") + '"' +
+            (i ? ' loading="lazy"' : "") + ">") +
+      "</div>"
+    ).join("");
+    if (!varios) return '<div class="galeria"><div class="galeria__pista">' + items + "</div></div>";
+    return (
+      '<div class="galeria" data-galeria>' +
+        '<div class="galeria__pista">' + items + "</div>" +
+        '<button type="button" class="galeria__flecha galeria__flecha--izq" data-mover="-1" aria-label="Anterior" disabled>&#8249;</button>' +
+        '<button type="button" class="galeria__flecha galeria__flecha--der" data-mover="1" aria-label="Siguiente">&#8250;</button>' +
+        '<div class="galeria__puntos">' +
+          medios.map((_, i) => "<span" + (i ? "" : ' class="activo"') + "></span>").join("") +
+        "</div>" +
+      "</div>"
+    );
+  }
+
+  function moverGaleria(paso) {
+    const pista = $("#modalCuerpo .galeria__pista");
+    if (!pista) return;
+    const i = Math.round(pista.scrollLeft / pista.clientWidth) + paso;
+    pista.scrollTo({ left: i * pista.clientWidth, behavior: "smooth" });
+  }
+
+  function activarGaleria() {
+    const g = $("#modalCuerpo [data-galeria]");
+    if (!g) return;
+    const pista = g.querySelector(".galeria__pista");
+    const puntos = [...g.querySelectorAll(".galeria__puntos span")];
+    const izq = g.querySelector('[data-mover="-1"]');
+    const der = g.querySelector('[data-mover="1"]');
+    let pendiente = false;
+    pista.addEventListener("scroll", () => {
+      if (pendiente) return;
+      pendiente = true;
+      requestAnimationFrame(() => {
+        pendiente = false;
+        const i = Math.round(pista.scrollLeft / pista.clientWidth);
+        puntos.forEach((pt, k) => pt.classList.toggle("activo", k === i));
+        izq.disabled = i <= 0;
+        der.disabled = i >= puntos.length - 1;
+        // El video que queda fuera de vista se pausa: si no, sigue sonando.
+        [...pista.children].forEach((item, k) => {
+          const v = item.querySelector("video");
+          if (v && k !== i) v.pause();
+        });
+      });
+    }, { passive: true });
+    g.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-mover]");
+      if (b) moverGaleria(Number(b.dataset.mover));
+    });
+  }
+
+  // Enlace directo a un articulo (#p=12): sirve para compartirlo en redes o
+  // para que el bot de WhatsApp mande a ver las fotos.
+  function abrirDesdeEnlace() {
+    const m = location.hash.match(/^#p=([0-9]+)$/);
+    if (m && PRODUCTOS.some((x) => x.id === Number(m[1]))) abrirFicha(m[1]);
+  }
+
+  async function compartir(p) {
+    const url = location.origin + location.pathname + "#p=" + p.id;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: p.nombre, text: p.nombre + " en " + CONFIG.nombre, url: url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      avisar("Enlace copiado: ya lo puedes pegar donde quieras");
+    } catch (e) {
+      // El cliente cancelo el menu de compartir: no hay nada que avisar.
+    }
   }
 
   function tarjeta(p) {
@@ -383,7 +503,7 @@
 
     $("#modalCuerpo").innerHTML =
       '<div class="detalle">' +
-        '<div class="detalle__figura">' + figura(p) +
+        '<div class="detalle__figura">' + galeria(p) +
           '<div class="insignias">' +
             (desc > 0 ? '<span class="insignia insignia--oferta">-' + desc + "%</span>" : "") +
           "</div>" +
@@ -402,12 +522,17 @@
           (agotado || consultar
             ? ""
             : '<div class="cantidad"><button data-cant="-1">−</button><span id="cantValor">1</span><button data-cant="1">+</button></div>') +
-          '<div class="detalle__acciones">' + acciones + "</div>" +
+          '<div class="detalle__acciones">' + acciones +
+            '<button type="button" class="btn btn--claro btn--bloque" id="compartirFicha">' +
+            ICO.compartir + " Compartir este artículo</button>" +
+          "</div>" +
         "</div>" +
       "</div>";
 
     $("#modal").classList.remove("oculto");
     document.body.style.overflow = "hidden";
+    activarGaleria();
+    history.replaceState(null, "", "#p=" + p.id);
   }
 
   function waConsulta(p) {
@@ -423,6 +548,8 @@
   }
 
   function cerrarFicha() {
+    $("#modal").querySelectorAll("video").forEach((v) => v.pause());
+    if (/^#p=/.test(location.hash)) history.replaceState(null, "", location.pathname + location.search);
     $("#modal").classList.add("oculto");
     document.body.style.overflow = "";
     productoAbierto = null;
@@ -646,6 +773,8 @@
         return;
       }
 
+      if (e.target.closest("#compartirFicha") && productoAbierto) return compartir(productoAbierto);
+
       if (e.target.closest("#agregarModal") && productoAbierto) {
         agregar(productoAbierto.id, cantidadModal);
         cerrarFicha();
@@ -730,6 +859,9 @@
 
     // Escape cierra
     document.addEventListener("keydown", (e) => {
+      if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && !$("#modal").classList.contains("oculto")) {
+        return moverGaleria(e.key === "ArrowLeft" ? -1 : 1);
+      }
       if (e.key !== "Escape") return;
       if (!$("#modal").classList.contains("oculto")) cerrarFicha();
       else if (!$("#panelCarrito").classList.contains("oculto")) cerrarCarrito();
@@ -755,11 +887,17 @@
     $("#totalCategorias").textContent = CATEGORIAS.length;
 
     // Y si hay panel en linea, cuando lleguen sus datos se vuelve a dibujar.
+    // El enlace directo se abre con el catalogo definitivo: los numeros de
+    // articulo del catalogo local no son los de la base.
     if (typeof CO_DATOS !== "undefined" && CO_DATOS.configurado()) {
       CO_DATOS.cargar().then((r) => {
         if (r && r.origen === "supabase") repintar();
+        abrirDesdeEnlace();
       });
+    } else {
+      abrirDesdeEnlace();
     }
+    window.addEventListener("hashchange", abrirDesdeEnlace);
   }
 
   document.addEventListener("DOMContentLoaded", iniciar);

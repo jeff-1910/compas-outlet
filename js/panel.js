@@ -15,6 +15,15 @@
   var lista = [];
   var editandoId = null;
 
+  var medios = [];        // galeria del articulo que se esta editando
+  var mediosAntes = [];   // la que tenia al abrirlo: para borrar lo que se quite
+  var subidosAhora = [];  // subidos en esta edicion y todavia sin guardar
+  var subiendo = false;
+
+  var MAX_MEDIOS = 10;
+  var MAX_VIDEO_MB = 50;
+  var VIDEOS = { "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm", "video/x-m4v": "m4v" };
+
   var escapar = function (t) {
     return String(t).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -65,6 +74,9 @@
     if (/User already registered|already been registered/i.test(m))
       return "Ese correo ya tiene cuenta. Usa «Ya tengo cuenta» para entrar.";
     if (/Password should be at least/i.test(m)) return "La contraseña es muy corta: mínimo 6 caracteres.";
+    if (/exceeded the maximum allowed size|Payload too large|413/i.test(m))
+      return "El archivo es demasiado pesado para el almacén de fotos.";
+    if (/mime type|not supported/i.test(m)) return "Ese tipo de archivo no está permitido en el almacén.";
     if (/Signups not allowed|signup is disabled/i.test(m))
       return "El registro está desactivado en Supabase. Avísame y lo resolvemos.";
     return m;
@@ -157,6 +169,14 @@
         llenarCategorias();
       }
 
+      // Si la base ya tiene la columna de galerias. Mientras no, el panel
+      // sigue con una sola foto por articulo, como antes.
+      var prueba = await sb.from("productos").select("medios").limit(1);
+      if (prueba.error && !/medios|42703/.test(prueba.error.message + " " + prueba.error.code)) {
+        throw prueba.error;
+      }
+      prepararGaleria(!prueba.error);
+
       var prods = await sb.from("productos").select("*").order("id", { ascending: true });
       if (prods.error) throw prods.error;
       lista = (prods.data || []).map(CO_DATOS.desdeBase);
@@ -181,31 +201,25 @@
     editandoId = null;
     $("#formulario").reset();
     $("#fId").value = "";
-    $("#fImagen").value = "";
+    descartarSubidos();
+    medios = [];
+    mediosAntes = [];
     $("#fPrecioAntes").value = 0;
     $("#fStock").value = 1;
     if (conservarCategoria && ultimaCategoria) $("#fCategoria").value = ultimaCategoria;
     $("#tituloForm").textContent = "Nuevo artículo";
     $("#btnGuardar").textContent = "Guardar artículo";
     mostrarError("#errorForm", "");
-    pintarPrevia("");
-  }
-
-  function pintarPrevia(url) {
-    var caja = $("#previa");
-    if (url) {
-      caja.innerHTML = '<img src="' + escapar(url) + '" alt="Vista previa">';
-      $("#btnQuitarFoto").classList.remove("oculto");
-    } else {
-      caja.textContent = "Sin foto";
-      $("#btnQuitarFoto").classList.add("oculto");
-    }
+    pintarMedios();
   }
 
   function editar(id) {
     var p = lista.find(function (x) { return x.id === Number(id); });
     if (!p) return;
+    descartarSubidos();
     editandoId = p.id;
+    medios = CO_DATOS.mediosDe(p).slice();
+    mediosAntes = medios.slice();
 
     $("#fId").value = p.id;
     $("#fNombre").value = p.nombre;
@@ -213,7 +227,6 @@
     $("#fPrecio").value = p.precio;
     $("#fPrecioAntes").value = p.precioAntes || 0;
     $("#fStock").value = p.stock;
-    $("#fImagen").value = p.imagen || "";
     $("#fDescripcion").value = p.descripcion || "";
     $("#fEtiquetas").value = (p.etiquetas || []).join(", ");
     $("#fDestacado").checked = !!p.destacado;
@@ -221,7 +234,7 @@
     $("#tituloForm").textContent = "Editando: " + p.nombre;
     $("#btnGuardar").textContent = "Guardar cambios";
     mostrarError("#errorForm", "");
-    pintarPrevia(p.imagen);
+    pintarMedios();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -232,6 +245,7 @@
     try {
       var r = await sb.from("productos").delete().eq("id", p.id);
       if (r.error) throw r.error;
+      if (CO_DATOS.conMedios()) borrarArchivos(CO_DATOS.mediosDe(p).map(urlDe));
       if (editandoId === p.id) limpiarFormulario();
       await recargar();
     } catch (err) {
@@ -242,6 +256,7 @@
   async function guardar(e) {
     e.preventDefault();
     mostrarError("#errorForm", "");
+    if (subiendo) return mostrarError("#errorForm", "Espera a que terminen de subir las fotos.");
 
     var etiquetas = $("#fEtiquetas").value.split(",")
       .map(function (t) { return t.trim(); })
@@ -252,7 +267,7 @@
       categoria: $("#fCategoria").value,
       precio: Number($("#fPrecio").value) || 0,
       precioAntes: Number($("#fPrecioAntes").value) || 0,
-      imagen: $("#fImagen").value.trim(),
+      medios: medios.slice(),
       descripcion: $("#fDescripcion").value.trim(),
       stock: Number($("#fStock").value) || 0,
       destacado: $("#fDestacado").checked,
@@ -278,6 +293,15 @@
         r = await sb.from("productos").insert(CO_DATOS.haciaBase(datos));
       }
       if (r.error) throw r.error;
+
+      // Ya quedo guardado: lo subido ahora pasa a ser del articulo, y lo que
+      // se quito de la galeria ya no lo usa nadie. Solo con galerias: sin
+      // ellas no sabemos que otras fotos sigue usando la base.
+      subidosAhora = [];
+      if (CO_DATOS.conMedios()) {
+        var quedan = medios.map(urlDe);
+        borrarArchivos(mediosAntes.map(urlDe).filter(function (u) { return quedan.indexOf(u) < 0; }));
+      }
 
       ultimaCategoria = datos.categoria;
       limpiarFormulario(true);
@@ -323,36 +347,184 @@
     });
   }
 
-  function nombreLimpio(nombre) {
+  function nombreLimpio(nombre, extension) {
     var base = nombre.replace(/\.[^.]+$/, "").toLowerCase().normalize("NFD");
     var limpio = base.split("").filter(function (c) {
       var n = c.charCodeAt(0);
       return n < 0x300 || n > 0x36f;
     }).join("").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
     // El sufijo evita pisar una foto anterior con el mismo nombre.
-    return (limpio || "foto") + "-" + Date.now().toString(36) + ".jpg";
+    return (limpio || "foto") + "-" + Date.now().toString(36) +
+      Math.random().toString(36).slice(2, 5) + "." + extension;
   }
 
-  async function subirFoto(archivo) {
-    var boton = $("#btnFoto");
-    ocupado(boton, "Subiendo…");
-    try {
-      var blob = await optimizar(archivo);
-      var nombre = nombreLimpio(archivo.name);
-      var subida = await sb.storage.from("fotos").upload(nombre, blob, {
-        contentType: "image/jpeg",
-        upsert: false,
-      });
-      if (subida.error) throw subida.error;
+  var urlDe = function (m) { return m.url; };
 
-      var publica = sb.storage.from("fotos").getPublicUrl(nombre);
-      $("#fImagen").value = publica.data.publicUrl;
-      pintarPrevia(publica.data.publicUrl);
-    } catch (err) {
-      mostrarError("#errorForm", "No se pudo subir la foto: " + enCastellano(err));
-    } finally {
-      libre(boton);
+  async function subirAlAlmacen(nombre, cuerpo, tipo) {
+    // Los nombres nunca se repiten, asi que el navegador puede guardarlos
+    // un año: la tienda carga mas rapido la segunda vez.
+    var r = await sb.storage.from("fotos").upload(nombre, cuerpo, {
+      contentType: tipo,
+      upsert: false,
+      cacheControl: "31536000",
+    });
+    if (r.error) throw r.error;
+    return sb.storage.from("fotos").getPublicUrl(nombre).data.publicUrl;
+  }
+
+  async function subirUno(archivo) {
+    var tipo = archivo.type || "";
+    if (/^video\//.test(tipo) || /\.(mp4|mov|m4v|webm)$/i.test(archivo.name)) {
+      var mb = archivo.size / 1048576;
+      if (mb > MAX_VIDEO_MB) {
+        throw new Error("pesa " + Math.round(mb) + " MB y el máximo es " + MAX_VIDEO_MB +
+          ". Recórtalo o grábalo más corto.");
+      }
+      var ext = VIDEOS[tipo] || (archivo.name.split(".").pop() || "").toLowerCase();
+      if (!/^(mp4|mov|m4v|webm)$/.test(ext)) throw new Error("ese formato de video no se ve en todos los celulares");
+      var url = await subirAlAlmacen(nombreLimpio(archivo.name, ext), archivo, tipo || "video/mp4");
+      return { tipo: "video", url: url };
     }
+    if (!/^image\//.test(tipo)) throw new Error("no es una foto ni un video");
+    var blob = await optimizar(archivo);
+    return { tipo: "imagen", url: await subirAlAlmacen(nombreLimpio(archivo.name, "jpg"), blob, "image/jpeg") };
+  }
+
+  async function subirArchivos(archivos) {
+    var simple = !CO_DATOS.conMedios();
+    var pendientes = Array.prototype.slice.call(archivos);
+    var problemas = [];
+
+    if (simple) {
+      pendientes = pendientes.filter(function (a) { return /^image\//.test(a.type); }).slice(0, 1);
+      if (!pendientes.length) {
+        return mostrarError("#errorForm",
+          "Por ahora solo se puede una foto. Los videos se habilitan con el paso de Supabase.");
+      }
+    } else if (pendientes.length > MAX_MEDIOS - medios.length) {
+      var sobran = pendientes.length - (MAX_MEDIOS - medios.length);
+      pendientes = pendientes.slice(0, MAX_MEDIOS - medios.length);
+      problemas.push("quedaron " + sobran + " sin subir: el máximo es " + MAX_MEDIOS + " por artículo");
+    }
+
+    mostrarError("#errorForm", "");
+    subiendo = true;
+    var boton = $("#btnFoto");
+    try {
+      for (var k = 0; k < pendientes.length; k++) {
+        boton.disabled = true;
+        boton.textContent = pendientes.length > 1
+          ? "Subiendo " + (k + 1) + " de " + pendientes.length + "…"
+          : "Subiendo…";
+        try {
+          var nuevo = await subirUno(pendientes[k]);
+          if (simple) {
+            descartarSubidos();
+            medios = [nuevo];
+          } else {
+            medios.push(nuevo);
+          }
+          subidosAhora.push(nuevo.url);
+          pintarMedios();
+        } catch (err) {
+          problemas.push(pendientes[k].name + ": " + enCastellano(err));
+        }
+      }
+    } finally {
+      subiendo = false;
+      pintarMedios();
+    }
+    if (problemas.length) mostrarError("#errorForm", "Ojo · " + problemas.join(" · "));
+  }
+
+  function rutaEnAlmacen(url) {
+    var marca = "/storage/v1/object/public/fotos/";
+    var i = String(url).indexOf(marca);
+    return i < 0 ? null : decodeURIComponent(url.slice(i + marca.length).split(/[?#]/)[0]);
+  }
+
+  // Borra del almacen lo que ya no usa nadie. Si falla no es grave: el
+  // articulo ya quedo bien, solo sobra un archivo que ocupa lugar.
+  async function borrarArchivos(urls) {
+    var rutas = urls.map(rutaEnAlmacen).filter(Boolean);
+    if (!rutas.length) return;
+    var r = await sb.storage.from("fotos").remove(rutas);
+    if (r.error) console.warn("Compas Outlet: no se pudieron borrar archivos viejos.", r.error);
+  }
+
+  // Lo subido en una edicion que no se guardo no lo usa ningun articulo.
+  function descartarSubidos() {
+    if (!subidosAhora.length) return;
+    borrarArchivos(subidosAhora);
+    subidosAhora = [];
+  }
+
+  function prepararGaleria(conGalerias) {
+    CO_DATOS.conMedios(conGalerias);
+    $("#faltaMedios").classList.toggle("oculto", conGalerias);
+    $("#pistaMedios").classList.toggle("oculto", !conGalerias);
+    $("#fArchivo").multiple = conGalerias;
+    $("#fArchivo").accept = conGalerias ? "image/*,video/*" : "image/*";
+    pintarMedios();
+  }
+
+  function pintarMedios() {
+    var simple = !CO_DATOS.conMedios();
+    var portada = medios.findIndex(function (m) { return m.tipo === "imagen"; });
+    var ultimo = medios.length - 1;
+
+    $("#medios").innerHTML = medios.map(function (m, i) {
+      var vista = m.tipo === "video"
+        ? '<video src="' + escapar(m.url) + '#t=0.1" muted playsinline preload="metadata"></video>'
+        : '<img src="' + escapar(m.url) + '" alt="" loading="lazy">';
+      var etiqueta = m.tipo === "video"
+        ? '<span class="medio__etiqueta medio__etiqueta--video">▶ Video</span>'
+        : i === portada ? '<span class="medio__etiqueta">Portada</span>' : "";
+      var mover = medios.length > 1
+        ? '<div class="medio__mover">' +
+            '<button type="button" data-medio="izq" data-i="' + i + '" aria-label="Mover antes"' +
+              (i === 0 ? " disabled" : "") + ">‹</button>" +
+            '<button type="button" data-medio="der" data-i="' + i + '" aria-label="Mover después"' +
+              (i === ultimo ? " disabled" : "") + ">›</button>" +
+          "</div>"
+        : "";
+      return (
+        '<div class="medio">' + vista + etiqueta +
+          '<button type="button" class="medio__quitar" data-medio="quitar" data-i="' + i +
+            '" aria-label="Quitar">×</button>' +
+          mover +
+        "</div>"
+      );
+    }).join("");
+
+    if (subiendo) return;
+    var boton = $("#btnFoto");
+    var lleno = !simple && medios.length >= MAX_MEDIOS;
+    boton.disabled = lleno;
+    boton.textContent = simple
+      ? (medios.length ? "Cambiar foto…" : "Elegir foto…")
+      : lleno ? "Llegaste al máximo de " + MAX_MEDIOS
+      : medios.length ? "Agregar más fotos o videos…" : "Agregar fotos o videos…";
+  }
+
+  function tocarMedio(accion, i) {
+    if (subiendo || i < 0 || i >= medios.length) return;
+    if (accion === "quitar") {
+      var quitado = medios.splice(i, 1)[0];
+      // Si se subio en esta misma edicion, nadie mas lo usa: se borra ya.
+      var k = subidosAhora.indexOf(quitado.url);
+      if (k >= 0) {
+        subidosAhora.splice(k, 1);
+        borrarArchivos([quitado.url]);
+      }
+    } else {
+      var j = accion === "izq" ? i - 1 : i + 1;
+      if (j < 0 || j >= medios.length) return;
+      var tmp = medios[i];
+      medios[i] = medios[j];
+      medios[j] = tmp;
+    }
+    pintarMedios();
   }
 
   /* ------------------------------------------------------------- Listado */
@@ -383,6 +555,8 @@
       var stock = p.stock > 0
         ? p.stock + " en existencia"
         : '<span style="color:var(--rojo)">agotado</span>';
+      var cantidad = (p.medios || []).length;
+      var galeria = cantidad > 1 ? " · " + cantidad + " fotos/videos" : cantidad ? "" : " · sin foto";
       return (
         '<div class="articulo">' +
           '<div class="articulo__foto">' +
@@ -393,7 +567,7 @@
               (p.destacado ? ' <span style="color:var(--rojo-oscuro);font-size:11px">★</span>' : "") +
             "</p>" +
             '<div class="articulo__meta">' + escapar(catNombre(p.categoria)) +
-              " · " + precio + " · " + stock + "</div>" +
+              " · " + precio + " · " + stock + galeria + "</div>" +
           "</div>" +
           '<div class="articulo__acc">' +
             '<button type="button" data-editar="' + p.id + '">Editar</button>' +
@@ -444,13 +618,13 @@
 
     $("#btnFoto").addEventListener("click", function () { $("#fArchivo").click(); });
     $("#fArchivo").addEventListener("change", function (e) {
-      var archivo = e.target.files[0];
-      if (archivo) subirFoto(archivo);
+      var archivos = e.target.files;
+      if (archivos && archivos.length) subirArchivos(archivos);
       e.target.value = "";
     });
-    $("#btnQuitarFoto").addEventListener("click", function () {
-      $("#fImagen").value = "";
-      pintarPrevia("");
+    $("#medios").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-medio]");
+      if (b) tocarMedio(b.dataset.medio, Number(b.dataset.i));
     });
 
     $("#listado").addEventListener("click", function (e) {

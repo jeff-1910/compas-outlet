@@ -105,17 +105,58 @@
   .panel h2 { margin: 0 0 4px; font-size: 18px; }
   .panel > p.sub { margin: 0 0 18px; font-size: 13.5px; color: var(--text-muted); }
 
-  .previa {
-    width: 100%; aspect-ratio: 4/3;
+  /* Galeria del articulo: fotos y videos en orden, la primera foto es portada */
+  .medios {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .medios:empty {
+    place-items: center;
+    min-height: 90px;
     border: 1px dashed var(--border);
     border-radius: var(--radius-sm);
     background: var(--surface-2);
-    display: grid; place-items: center;
-    overflow: hidden; margin-bottom: 10px;
-    font-size: 12.5px; color: var(--text-muted);
-    text-align: center; padding: 10px;
   }
-  .previa img { width: 100%; height: 100%; object-fit: contain; }
+  .medios:empty::before { content: "Sin fotos todavía"; font-size: 12.5px; color: var(--text-muted); }
+  .medio {
+    position: relative; aspect-ratio: 1;
+    border-radius: 9px; overflow: hidden;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+  }
+  .medio img, .medio video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .medio__etiqueta {
+    position: absolute; left: 5px; top: 5px;
+    padding: 2px 7px; border-radius: 10px;
+    background: var(--rojo); color: #fff;
+    font-size: 10px; font-weight: 700;
+  }
+  .medio__etiqueta--video { background: rgba(0, 0, 0, .72); }
+  .medio__quitar, .medio__mover button {
+    width: 28px; height: 28px; padding: 0;
+    border: 0; border-radius: 50%;
+    background: rgba(255, 255, 255, .94); color: #131c2e;
+    font-size: 16px; line-height: 1;
+    display: grid; place-items: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .28);
+    cursor: pointer;
+  }
+  .medio__quitar { position: absolute; right: 5px; top: 5px; }
+  .medio__quitar:hover { background: var(--rojo); color: #fff; }
+  .medio__mover {
+    position: absolute; left: 5px; right: 5px; bottom: 5px;
+    display: flex; justify-content: space-between;
+  }
+  .medio__mover button:disabled { visibility: hidden; }
+  .aviso-medios {
+    padding: 10px 12px; margin-bottom: 10px;
+    border-left: 3px solid var(--rojo);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    font-size: 12.5px; line-height: 1.45;
+  }
 
   /* Lista de articulos: tarjetas en movil, filas en escritorio */
   .articulo {
@@ -238,14 +279,18 @@
         </div>
 
         <div class="campo">
-          <label>Foto</label>
-          <div class="previa" id="previa">Sin foto</div>
+          <label>Fotos y videos <span class="pista">(la primera foto es la portada)</span></label>
+          <div class="aviso-medios oculto" id="faltaMedios">
+            <b>Por ahora, una sola foto por artículo.</b> Para subir varias fotos y videos
+            falta un paso en Supabase: correr el archivo <code>supabase/medios.sql</code>.
+          </div>
+          <div class="medios" id="medios"></div>
           <input type="file" id="fArchivo" accept="image/*" style="display:none">
           <button type="button" class="btn btn--claro btn--bloque" id="btnFoto">Elegir foto…</button>
-          <button type="button" class="btn btn--claro btn--bloque oculto" id="btnQuitarFoto" style="margin-top:7px">Quitar foto</button>
-          <input type="hidden" id="fImagen">
-          <p class="pista" style="margin:8px 0 0">
-            Se sube sola y se optimiza: una foto del celular queda liviana.
+          <p class="pista oculto" id="pistaMedios" style="margin:8px 0 0">
+            Puedes elegir varias a la vez, hasta 10 por artículo. Las fotos se achican solas.
+            Videos de hasta 50 MB: mejor cortos, de menos de 30 segundos.
+            Con las flechas cambias el orden.
           </p>
         </div>
 

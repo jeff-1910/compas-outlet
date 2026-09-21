@@ -13,6 +13,31 @@ var CO_DATOS = (function () {
   var cliente = null;
   var origen = "local";
 
+  // Si la base ya tiene la columna de galerias. El panel lo averigua al
+  // entrar; mientras no la tenga, se guarda solo la portada, como antes.
+  var conMedios = false;
+
+  var TIPOS = { imagen: true, video: true };
+
+  // Galeria del articulo: fotos y videos en orden. Sirve para filas de la
+  // base, para articulos del catalogo local y para bases sin la columna
+  // nueva: en esos casos se arma con la foto unica de siempre.
+  function mediosDe(p) {
+    var lista = Array.isArray(p && p.medios) ? p.medios : [];
+    lista = lista.filter(function (m) {
+      return m && TIPOS[m.tipo] && typeof m.url === "string" && m.url;
+    });
+    if (!lista.length && p && p.imagen) lista = [{ tipo: "imagen", url: p.imagen }];
+    return lista;
+  }
+
+  // La portada es la primera FOTO: un video no sirve de miniatura en todos
+  // los celulares, y lo que lee el bot tiene que ser una imagen.
+  function portada(p) {
+    var foto = mediosDe(p).find(function (m) { return m.tipo === "imagen"; });
+    return foto ? foto.url : "";
+  }
+
   function configurado() {
     return !!(CONFIG.supabase && CONFIG.supabase.url && CONFIG.supabase.anonKey);
   }
@@ -39,6 +64,7 @@ var CO_DATOS = (function () {
       precio: Number(fila.precio) || 0,
       precioAntes: Number(fila.precio_antes) || 0,
       imagen: fila.imagen || "",
+      medios: mediosDe(fila),
       descripcion: fila.descripcion || "",
       stock: Number(fila.stock) || 0,
       destacado: !!fila.destacado,
@@ -47,17 +73,19 @@ var CO_DATOS = (function () {
   }
 
   function haciaBase(p) {
-    return {
+    var fila = {
       nombre: p.nombre,
       categoria: p.categoria,
       precio: Number(p.precio) || 0,
       precio_antes: Number(p.precioAntes) || 0,
-      imagen: p.imagen || "",
+      imagen: portada(p),
       descripcion: p.descripcion || "",
       stock: Number(p.stock) || 0,
       destacado: !!p.destacado,
       etiquetas: p.etiquetas || [],
     };
+    if (conMedios) fila.medios = mediosDe(p);
+    return fila;
   }
 
   /* ------------------------------------------------------------- Cargar */
@@ -116,6 +144,12 @@ var CO_DATOS = (function () {
     configurado: configurado,
     desdeBase: desdeBase,
     haciaBase: haciaBase,
+    mediosDe: mediosDe,
+    portada: portada,
+    conMedios: function (si) {
+      if (arguments.length) conMedios = !!si;
+      return conMedios;
+    },
     origen: function () { return origen; },
   };
 })();

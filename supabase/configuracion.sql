@@ -24,7 +24,8 @@ create table if not exists public.productos (
   categoria    text    references public.categorias(id) on delete set null,
   precio       numeric not null default 0,   -- 0 = "Consultar precio"
   precio_antes numeric not null default 0,   -- 0 = sin oferta
-  imagen       text    not null default '',
+  imagen       text    not null default '',   -- portada: la primera foto de medios
+  medios       jsonb   not null default '[]',  -- galeria: fotos y videos en orden
   descripcion  text    not null default '',
   stock        int     not null default 0,   -- 0 = agotado
   destacado    boolean not null default false,
@@ -33,6 +34,9 @@ create table if not exists public.productos (
 );
 
 create index if not exists productos_categoria_idx on public.productos (categoria);
+
+-- Para bases creadas antes de las galerias.
+alter table public.productos add column if not exists medios jsonb not null default '[]'::jsonb;
 
 -- ------------------------------------------------------- Quien es el dueno
 --  La PRIMERA cuenta que se cree queda como dueno de la tienda. Si mas

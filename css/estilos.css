@@ -1080,3 +1080,102 @@ button { font-family: inherit; cursor: pointer; }
   .chat-panel { animation: none; }
   .chat-escribiendo span { animation: none; opacity: .6; }
 }
+
+/* --------------------------------------------------------------- Galeria */
+
+/* Portada en video, para los articulos que solo tienen video */
+.tarjeta__figura video {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* Sobre la portada: cuantas fotos hay y si hay video */
+.galeria-cuenta {
+  position: absolute;
+  left: 10px; bottom: 10px;
+  z-index: 2;
+  display: flex; gap: 9px; align-items: center;
+  padding: 5px 9px;
+  border-radius: 20px;
+  background: rgba(7, 17, 41, .74);
+  color: #fff;
+  font-size: 11.5px; font-weight: 600;
+  line-height: 1;
+  pointer-events: none;
+}
+.galeria-cuenta span { display: inline-flex; align-items: center; gap: 4px; }
+.galeria-cuenta svg { width: 13px; height: 13px; }
+
+/* Ficha: fotos y videos que se deslizan con el dedo */
+.galeria { position: relative; width: 100%; height: 100%; }
+.galeria__pista {
+  display: flex;
+  width: 100%; height: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.galeria__pista::-webkit-scrollbar { display: none; }
+.galeria__item {
+  position: relative;
+  flex: 0 0 100%;
+  overflow: hidden;
+  scroll-snap-align: center;
+  background: var(--surface-2);
+}
+
+/* En la ficha se ve el articulo entero, aunque la foto sea vertical */
+/* Pegadas a los bordes de la caja: con alto en porcentaje, una foto vertical
+   se salia por abajo en vez de achicarse. */
+.detalle__figura .galeria__item img,
+.detalle__figura .galeria__item video {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+}
+.detalle__figura .galeria__item video { background: #000; }
+.detalle__figura .agotado-capa { pointer-events: none; }
+
+.galeria__flecha {
+  position: absolute; top: 50%; z-index: 3;
+  transform: translateY(-50%);
+  width: 38px; height: 38px;
+  border: 0; border-radius: 50%;
+  background: rgba(255, 255, 255, .92);
+  color: #131c2e;
+  font-size: 26px; line-height: 1;
+  display: grid; place-items: center;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: opacity .2s;
+}
+.galeria__flecha--izq { left: 10px; }
+.galeria__flecha--der { right: 10px; }
+.galeria__flecha:disabled { opacity: 0; pointer-events: none; }
+
+/* Arriba y no abajo: abajo estan los controles de los videos */
+.galeria__puntos {
+  position: absolute; left: 0; right: 0; top: 14px; z-index: 3;
+  display: flex; justify-content: center; gap: 6px;
+  pointer-events: none;
+}
+.galeria__puntos span {
+  width: 7px; height: 7px; border-radius: 4px;
+  background: rgba(255, 255, 255, .55);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .18);
+  transition: width .2s, background .2s;
+}
+.galeria__puntos span.activo { width: 18px; background: #fff; }
+
+@media (max-width: 900px) {
+  /* Mas alta que antes: con galeria, las fotos verticales del celular
+     quedaban chiquitas en 16:10. */
+  .detalle__figura { aspect-ratio: 4 / 3; }
+}
+
+@media (hover: none) {
+  /* En el celular se desliza con el dedo: las flechas solo estorban */
+  .galeria__flecha { display: none; }
+}
