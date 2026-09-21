@@ -17,9 +17,9 @@ var CO_DATOS = (function () {
   // entrar; mientras no la tenga, se guarda solo la portada, como antes.
   var conMedios = false;
 
-  var TIPOS = { imagen: true, video: true };
+  var TIPOS = { imagen: true };
 
-  // Galeria del articulo: fotos y videos en orden. Sirve para filas de la
+  // Galeria del articulo: las fotos en orden. Sirve para filas de la
   // base, para articulos del catalogo local y para bases sin la columna
   // nueva: en esos casos se arma con la foto unica de siempre.
   function mediosDe(p) {
@@ -31,11 +31,11 @@ var CO_DATOS = (function () {
     return lista;
   }
 
-  // La portada es la primera FOTO: un video no sirve de miniatura en todos
-  // los celulares, y lo que lee el bot tiene que ser una imagen.
+  // La portada es la primera foto: es la que se ve en el catalogo y la que
+  // lee el bot.
   function portada(p) {
-    var foto = mediosDe(p).find(function (m) { return m.tipo === "imagen"; });
-    return foto ? foto.url : "";
+    var fotos = mediosDe(p);
+    return fotos.length ? fotos[0].url : "";
   }
 
   function configurado() {

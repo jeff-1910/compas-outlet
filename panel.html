@@ -105,7 +105,7 @@
   .panel h2 { margin: 0 0 4px; font-size: 18px; }
   .panel > p.sub { margin: 0 0 18px; font-size: 13.5px; color: var(--text-muted); }
 
-  /* Galeria del articulo: fotos y videos en orden, la primera foto es portada */
+  /* Fotos del articulo en orden: la primera es la portada */
   .medios {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
@@ -126,14 +126,13 @@
     background: var(--surface-2);
     border: 1px solid var(--border);
   }
-  .medio img, .medio video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .medio img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .medio__etiqueta {
     position: absolute; left: 5px; top: 5px;
     padding: 2px 7px; border-radius: 10px;
     background: var(--rojo); color: #fff;
     font-size: 10px; font-weight: 700;
   }
-  .medio__etiqueta--video { background: rgba(0, 0, 0, .72); }
   .medio__quitar, .medio__mover button {
     width: 28px; height: 28px; padding: 0;
     border: 0; border-radius: 50%;
@@ -279,18 +278,17 @@
         </div>
 
         <div class="campo">
-          <label>Fotos y videos <span class="pista">(la primera foto es la portada)</span></label>
+          <label>Fotos <span class="pista">(hasta 5 · la primera es la portada)</span></label>
           <div class="aviso-medios oculto" id="faltaMedios">
-            <b>Por ahora, una sola foto por artículo.</b> Para subir varias fotos y videos
-            falta un paso en Supabase: correr el archivo <code>supabase/medios.sql</code>.
+            <b>Por ahora, una sola foto por artículo.</b> Para subir hasta 5 falta un paso
+            en Supabase: correr el archivo <code>supabase/medios.sql</code>.
           </div>
           <div class="medios" id="medios"></div>
           <input type="file" id="fArchivo" accept="image/*" style="display:none">
           <button type="button" class="btn btn--claro btn--bloque" id="btnFoto">Elegir foto…</button>
           <p class="pista oculto" id="pistaMedios" style="margin:8px 0 0">
-            Puedes elegir varias a la vez, hasta 10 por artículo. Las fotos se achican solas.
-            Videos de hasta 50 MB: mejor cortos, de menos de 30 segundos.
-            Con las flechas cambias el orden.
+            Puedes elegir varias a la vez. Se achican solas: una foto del celular queda
+            liviana. Con las flechas cambias el orden.
           </p>
         </div>
 

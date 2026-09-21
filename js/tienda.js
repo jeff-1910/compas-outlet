@@ -59,7 +59,6 @@
     wa: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.69.63.71.22 1.36.19 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.42-.07-.13-.27-.2-.57-.35M12 2a10 10 0 0 0-8.53 15.26L2 22l4.85-1.42A10 10 0 1 0 12 2m0 1.67a8.32 8.32 0 0 1 6.6 13.4 8.32 8.32 0 0 1-11.9 1.16l-.35-.28-2.87.84.85-2.8-.3-.36A8.32 8.32 0 0 1 12 3.67"/></svg>',
     mas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
     foto: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>',
-    video: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
     compartir: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>',
     menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>',
     sol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
@@ -252,60 +251,41 @@
     img.remove();
   };
 
-  // Fotos y videos del articulo, en orden. Vale tambien para el catalogo
+  // Fotos del articulo, en orden. Vale tambien para el catalogo
   // local de productos.js, que solo trae una foto.
   const mediosDe = (p) =>
     typeof CO_DATOS !== "undefined"
       ? CO_DATOS.mediosDe(p)
       : p.imagen ? [{ tipo: "imagen", url: p.imagen }] : [];
 
-  // Portada de la tarjeta: la primera foto. Si el articulo solo tiene video,
-  // se muestra el primer cuadro del video.
+  // Portada de la tarjeta: la primera foto.
   function figura(p) {
-    const medios = mediosDe(p);
-    const foto = medios.find((m) => m.tipo === "imagen");
-    const video = medios.find((m) => m.tipo === "video");
-    let portada;
-    if (foto) {
-      portada =
-        '<img src="' + escapar(foto.url) + '" alt="' + escapar(p.nombre) +
-        '" data-pid="' + p.id + '" loading="lazy" onerror="__coFotoFallo(this)">';
-    } else if (video) {
-      portada =
-        '<video src="' + escapar(video.url) + '#t=0.1" muted playsinline preload="metadata"' +
-        ' data-pid="' + p.id + '" onerror="__coFotoFallo(this)"></video>';
-    } else {
-      return marcador(p, SIN_FOTO);
-    }
-    return portada + cuentaMedios(medios);
-  }
-
-  // Sobre la portada: cuantas fotos hay y si hay video. Invita a abrir la
-  // ficha, que es donde esta la galeria completa.
-  function cuentaMedios(medios) {
-    const fotos = medios.filter((m) => m.tipo === "imagen").length;
-    const videos = medios.length - fotos;
-    if (medios.length < 2 && !videos) return "";
+    const fotos = mediosDe(p);
+    if (!fotos.length) return marcador(p, SIN_FOTO);
     return (
-      '<span class="galeria-cuenta">' +
-        (fotos ? "<span>" + ICO.foto + fotos + "</span>" : "") +
-        (videos ? "<span>" + ICO.video + (videos > 1 ? videos : "Video") + "</span>" : "") +
-      "</span>"
+      '<img src="' + escapar(fotos[0].url) + '" alt="' + escapar(p.nombre) +
+      '" data-pid="' + p.id + '" loading="lazy" onerror="__coFotoFallo(this)">' +
+      cuentaFotos(fotos)
     );
   }
 
-  // Galeria de la ficha: fotos y videos que se deslizan con el dedo.
+  // Sobre la portada, cuantas fotos hay: invita a abrir la ficha, que es
+  // donde esta la galeria completa.
+  function cuentaFotos(fotos) {
+    if (fotos.length < 2) return "";
+    return '<span class="galeria-cuenta"><span>' + ICO.foto + fotos.length + "</span></span>";
+  }
+
+  // Galeria de la ficha: las fotos se deslizan con el dedo.
   function galeria(p) {
     const medios = mediosDe(p);
     if (!medios.length) return marcador(p, SIN_FOTO);
     const varios = medios.length > 1;
     const items = medios.map((m, i) =>
       '<div class="galeria__item">' +
-        (m.tipo === "video"
-          ? '<video src="' + escapar(m.url) + '" controls playsinline preload="metadata"></video>'
-          : '<img src="' + escapar(m.url) + '" alt="' + escapar(p.nombre) +
-            (varios ? " (" + (i + 1) + " de " + medios.length + ")" : "") + '"' +
-            (i ? ' loading="lazy"' : "") + ">") +
+        '<img src="' + escapar(m.url) + '" alt="' + escapar(p.nombre) +
+          (varios ? " (" + (i + 1) + " de " + medios.length + ")" : "") + '"' +
+          (i ? ' loading="lazy"' : "") + ">" +
       "</div>"
     ).join("");
     if (!varios) return '<div class="galeria"><div class="galeria__pista">' + items + "</div></div>";
@@ -345,11 +325,6 @@
         puntos.forEach((pt, k) => pt.classList.toggle("activo", k === i));
         izq.disabled = i <= 0;
         der.disabled = i >= puntos.length - 1;
-        // El video que queda fuera de vista se pausa: si no, sigue sonando.
-        [...pista.children].forEach((item, k) => {
-          const v = item.querySelector("video");
-          if (v && k !== i) v.pause();
-        });
       });
     }, { passive: true });
     g.addEventListener("click", (e) => {
@@ -548,7 +523,6 @@
   }
 
   function cerrarFicha() {
-    $("#modal").querySelectorAll("video").forEach((v) => v.pause());
     if (/^#p=/.test(location.hash)) history.replaceState(null, "", location.pathname + location.search);
     $("#modal").classList.add("oculto");
     document.body.style.overflow = "";

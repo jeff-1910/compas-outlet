@@ -15,14 +15,14 @@
   var lista = [];
   var editandoId = null;
 
-  var medios = [];        // galeria del articulo que se esta editando
+  var medios = [];        // fotos del articulo que se esta editando
   var mediosAntes = [];   // la que tenia al abrirlo: para borrar lo que se quite
   var subidosAhora = [];  // subidos en esta edicion y todavia sin guardar
   var subiendo = false;
 
-  var MAX_MEDIOS = 10;
-  var MAX_VIDEO_MB = 50;
-  var VIDEOS = { "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm", "video/x-m4v": "m4v" };
+  // Cinco alcanzan para mostrar un articulo desde todos lados, y cada foto
+  // optimizada pesa unos 200 KB: el almacen gratis dura muchisimo.
+  var MAX_MEDIOS = 5;
 
   var escapar = function (t) {
     return String(t).replace(/[&<>"']/g, function (c) {
@@ -373,19 +373,7 @@
   }
 
   async function subirUno(archivo) {
-    var tipo = archivo.type || "";
-    if (/^video\//.test(tipo) || /\.(mp4|mov|m4v|webm)$/i.test(archivo.name)) {
-      var mb = archivo.size / 1048576;
-      if (mb > MAX_VIDEO_MB) {
-        throw new Error("pesa " + Math.round(mb) + " MB y el máximo es " + MAX_VIDEO_MB +
-          ". Recórtalo o grábalo más corto.");
-      }
-      var ext = VIDEOS[tipo] || (archivo.name.split(".").pop() || "").toLowerCase();
-      if (!/^(mp4|mov|m4v|webm)$/.test(ext)) throw new Error("ese formato de video no se ve en todos los celulares");
-      var url = await subirAlAlmacen(nombreLimpio(archivo.name, ext), archivo, tipo || "video/mp4");
-      return { tipo: "video", url: url };
-    }
-    if (!/^image\//.test(tipo)) throw new Error("no es una foto ni un video");
+    if (!/^image\//.test(archivo.type || "")) throw new Error("solo se pueden subir fotos");
     var blob = await optimizar(archivo);
     return { tipo: "imagen", url: await subirAlAlmacen(nombreLimpio(archivo.name, "jpg"), blob, "image/jpeg") };
   }
@@ -397,14 +385,11 @@
 
     if (simple) {
       pendientes = pendientes.filter(function (a) { return /^image\//.test(a.type); }).slice(0, 1);
-      if (!pendientes.length) {
-        return mostrarError("#errorForm",
-          "Por ahora solo se puede una foto. Los videos se habilitan con el paso de Supabase.");
-      }
+      if (!pendientes.length) return mostrarError("#errorForm", "Solo se pueden subir fotos.");
     } else if (pendientes.length > MAX_MEDIOS - medios.length) {
       var sobran = pendientes.length - (MAX_MEDIOS - medios.length);
       pendientes = pendientes.slice(0, MAX_MEDIOS - medios.length);
-      problemas.push("quedaron " + sobran + " sin subir: el máximo es " + MAX_MEDIOS + " por artículo");
+      problemas.push("quedaron " + sobran + " sin subir: el máximo es " + MAX_MEDIOS + " fotos por artículo");
     }
 
     mostrarError("#errorForm", "");
@@ -464,22 +449,16 @@
     $("#faltaMedios").classList.toggle("oculto", conGalerias);
     $("#pistaMedios").classList.toggle("oculto", !conGalerias);
     $("#fArchivo").multiple = conGalerias;
-    $("#fArchivo").accept = conGalerias ? "image/*,video/*" : "image/*";
     pintarMedios();
   }
 
   function pintarMedios() {
     var simple = !CO_DATOS.conMedios();
-    var portada = medios.findIndex(function (m) { return m.tipo === "imagen"; });
     var ultimo = medios.length - 1;
 
     $("#medios").innerHTML = medios.map(function (m, i) {
-      var vista = m.tipo === "video"
-        ? '<video src="' + escapar(m.url) + '#t=0.1" muted playsinline preload="metadata"></video>'
-        : '<img src="' + escapar(m.url) + '" alt="" loading="lazy">';
-      var etiqueta = m.tipo === "video"
-        ? '<span class="medio__etiqueta medio__etiqueta--video">▶ Video</span>'
-        : i === portada ? '<span class="medio__etiqueta">Portada</span>' : "";
+      var vista = '<img src="' + escapar(m.url) + '" alt="" loading="lazy">';
+      var etiqueta = i === 0 ? '<span class="medio__etiqueta">Portada</span>' : "";
       var mover = medios.length > 1
         ? '<div class="medio__mover">' +
             '<button type="button" data-medio="izq" data-i="' + i + '" aria-label="Mover antes"' +
@@ -503,8 +482,8 @@
     boton.disabled = lleno;
     boton.textContent = simple
       ? (medios.length ? "Cambiar foto…" : "Elegir foto…")
-      : lleno ? "Llegaste al máximo de " + MAX_MEDIOS
-      : medios.length ? "Agregar más fotos o videos…" : "Agregar fotos o videos…";
+      : lleno ? "Ya tiene las " + MAX_MEDIOS + " fotos"
+      : medios.length ? "Agregar más fotos…" : "Agregar fotos…";
   }
 
   function tocarMedio(accion, i) {
@@ -556,7 +535,7 @@
         ? p.stock + " en existencia"
         : '<span style="color:var(--rojo)">agotado</span>';
       var cantidad = (p.medios || []).length;
-      var galeria = cantidad > 1 ? " · " + cantidad + " fotos/videos" : cantidad ? "" : " · sin foto";
+      var galeria = cantidad > 1 ? " · " + cantidad + " fotos" : cantidad ? "" : " · sin foto";
       return (
         '<div class="articulo">' +
           '<div class="articulo__foto">' +
