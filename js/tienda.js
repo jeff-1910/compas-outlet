@@ -333,15 +333,16 @@
     });
   }
 
-  // Enlace directo a un articulo (#p=12): sirve para compartirlo en redes o
-  // para que el bot de WhatsApp mande a ver las fotos.
+  // Enlace directo a un articulo (#p=12) dentro de la tienda. Para compartir
+  // hacia afuera se usa /p/12, que arma la vista previa con la foto del
+  // articulo (ver api/p.js) y despues trae a la persona hasta aca.
   function abrirDesdeEnlace() {
     const m = location.hash.match(/^#p=([0-9]+)$/);
     if (m && PRODUCTOS.some((x) => x.id === Number(m[1]))) abrirFicha(m[1]);
   }
 
   async function compartir(p) {
-    const url = location.origin + location.pathname + "#p=" + p.id;
+    const url = location.origin + "/p/" + p.id;
     try {
       if (navigator.share) {
         await navigator.share({ title: p.nombre, text: p.nombre + " en " + CONFIG.nombre, url: url });

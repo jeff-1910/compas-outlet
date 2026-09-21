@@ -41,7 +41,7 @@ async function traerCatalogo() {
   const [rc, rp] = await Promise.all([
     fetch(`${SUPABASE_URL}/rest/v1/categorias?select=id,nombre&order=orden`, { headers: cabeceras }),
     fetch(
-      `${SUPABASE_URL}/rest/v1/productos?select=id,nombre,categoria,precio,precio_antes,descripcion,stock,destacado&order=id`,
+      `${SUPABASE_URL}/rest/v1/productos?select=id,nombre,categoria,precio,precio_antes,descripcion,stock,destacado,imagen&order=id`,
       { headers: cabeceras }
     ),
   ]);
@@ -72,6 +72,8 @@ function catalogoEnTexto({ categorias, productos }) {
       partes.push(p.stock > 0 ? `${p.stock} disponibles` : "AGOTADO");
       if (p.destacado) partes.push("destacado");
       if (p.descripcion) partes.push(`- ${p.descripcion}`);
+      // Solo si tiene foto: sin foto, la ficha diria "Pide fotos por WhatsApp".
+      if (p.imagen) partes.push(`fotos: https://compas-outlet.vercel.app/p/${p.id}`);
       return partes.join(" | ");
     })
     .join("\n");
@@ -104,6 +106,8 @@ REGLAS QUE NO SE ROMPEN
   Si el dato no esta en el catalogo, decis que lo consulten por WhatsApp.
 - Si un articulo dice "precio a consultar", no estimes un precio: mandalo a WhatsApp.
 - Si esta AGOTADO, decilo claro y ofrece avisar cuando vuelva.
+- Si piden fotos de un articulo que tiene "fotos: <enlace>", pasales ese enlace tal
+  cual. Si no tiene, mandalos a WhatsApp a pedirlas.
 - No prometas descuentos, envios gratis ni fechas. Eso lo define el duenio.
 - No pidas datos personales, ni tarjetas, ni direcciones. Los pedidos se cierran
   por WhatsApp.
