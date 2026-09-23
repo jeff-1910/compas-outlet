@@ -83,6 +83,36 @@
     position: sticky; top: 0; z-index: 30;
     box-shadow: var(--shadow-sm);
   }
+  .importador__fila {
+    display: grid;
+    grid-template-columns: 54px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--linea, #e5e7eb);
+  }
+  .importador__fila:last-child { border-bottom: 0; }
+  .importador__foto {
+    width: 54px; height: 54px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #f1f3f7;
+  }
+  .importador__falta {
+    width: 54px; height: 54px;
+    border-radius: 8px;
+    background: #fdecef;
+    display: grid; place-items: center;
+    font-size: 20px;
+  }
+  .importador__texto { min-width: 0; }
+  .importador__texto b { display: block; font-size: 14.5px; }
+  .importador__texto span { font-size: 13px; color: #6b7280; }
+  .importador__estado { font-size: 13px; white-space: nowrap; }
+  .importador__estado--bien { color: #17693d; font-weight: 600; }
+  .importador__estado--mal { color: #a30d1e; font-weight: 600; }
+  .importador__pasos { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+
   .cabecera-panel__fila {
     display: flex; align-items: center; gap: 14px;
     height: 62px;
@@ -240,6 +270,40 @@
       <button class="btn btn--primario" id="btnNuevo">+ Artículo nuevo</button>
       <a class="btn btn--claro" href="index.html" target="_blank">Ver tienda</a>
       <button class="btn btn--claro" id="btnRecargar">Actualizar lista</button>
+      <button class="btn btn--claro" id="btnImportador">Importar varios</button>
+    </div>
+
+    <div class="panel oculto" id="importador" style="margin-bottom:18px">
+      <h2>Importar varios artículos</h2>
+      <p class="sub">
+        Para subir una tanda completa de una vez. Elige la lista que te prepararon
+        (un archivo <code>.json</code>) y después las fotos. Cada artículo se crea
+        con su foto, su nombre y su precio ya puestos.
+      </p>
+
+      <div class="error oculto" id="errorImportar"></div>
+
+      <p class="sub oculto" id="impTanda">
+        Hay una tanda preparada esperando. Tócala y se carga sola, con fotos y todo.
+      </p>
+
+      <div class="importador__pasos">
+        <button class="btn btn--primario oculto" type="button" id="btnImpTanda">Cargar la tanda preparada</button>
+        <button class="btn btn--claro" type="button" id="btnImpLista">1. Elegir la lista</button>
+        <button class="btn btn--claro" type="button" id="btnImpFotos">2. Elegir las fotos</button>
+        <input type="file" id="fImpLista" accept=".json,application/json" class="oculto">
+        <input type="file" id="fImpFotos" accept="image/*" multiple class="oculto">
+      </div>
+
+      <div id="impResumen" class="sub"></div>
+      <div id="impLista"></div>
+
+      <button class="btn btn--primario btn--bloque" type="button" id="btnImpSubir" style="margin-top:14px" disabled>
+        Subir todo
+      </button>
+      <button class="btn btn--claro btn--bloque" type="button" id="btnImpCerrar" style="margin-top:8px">
+        Cerrar
+      </button>
     </div>
 
     <div class="trabajo">

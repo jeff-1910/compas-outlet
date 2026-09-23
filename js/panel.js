@@ -24,6 +24,10 @@
   // optimizada pesa unos 200 KB: el almacen gratis dura muchisimo.
   var MAX_MEDIOS = 5;
 
+  var impPlan = null;     // la lista que se eligio
+  var impFotos = {};      // nombre de archivo -> File
+  var importando = false;
+
   var escapar = function (t) {
     return String(t).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -557,6 +561,224 @@
     }).join("");
   }
 
+  /* --------------------------------------------------- Importar varios */
+  // Subir treinta articulos de uno en uno es una tarde entera, y a la mitad
+  // se cansa cualquiera. Aca se elige una lista ya escrita (nombre, precio,
+  // categoria y descripcion de cada uno) y las fotos, y se crean todos.
+  // Lo que se sube pasa por el mismo camino que el formulario normal.
+
+  function abrirImportador(si) {
+    $("#importador").classList.toggle("oculto", !si);
+    if (si) $("#importador").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function reiniciarImportador() {
+    impPlan = null;
+    impFotos = {};
+    $("#impLista").innerHTML = "";
+    $("#impResumen").textContent = "";
+    $("#btnImpSubir").disabled = true;
+    $("#impTanda").classList.add("oculto");
+    $("#btnImpTanda").classList.add("oculto");
+    mostrarError("#errorImportar", "");
+  }
+
+  // Una lista mal armada tiene que decirlo aca, no a media subida.
+  function revisarPlan(crudo) {
+    var plan = JSON.parse(crudo);
+    if (!plan || !Array.isArray(plan.articulos) || !plan.articulos.length) {
+      throw new Error("La lista no trae ningún artículo.");
+    }
+    plan.articulos.forEach(function (a, i) {
+      if (!a || !a.archivo || !a.nombre) {
+        throw new Error("El artículo número " + (i + 1) + " no tiene nombre o no dice de qué foto es.");
+      }
+    });
+    return plan;
+  }
+
+  async function elegirLista(archivo) {
+    mostrarError("#errorImportar", "");
+    try {
+      impPlan = revisarPlan(await archivo.text());
+      pintarImportacion();
+    } catch (err) {
+      impPlan = null;
+      pintarImportacion();
+      mostrarError("#errorImportar", "No se pudo leer la lista: " + (err.message || err));
+    }
+  }
+
+  // Una tanda que quedo preparada en la tienda (carpeta importar/). Asi el
+  // equipo no tiene que ir a buscar treinta fotos en el telefono: entra al
+  // panel, la carga y la sube.
+  async function hayTandaPreparada() {
+    try {
+      var r = await fetch("importar/lista.json", { cache: "no-store" });
+      if (!r.ok) return false;
+      var plan = revisarPlan(await r.text());
+      $("#impTanda").textContent =
+        (plan.titulo || "Tanda preparada") + ": " + plan.articulos.length + " artículos listos para subir.";
+      $("#impTanda").classList.remove("oculto");
+      $("#btnImpTanda").classList.remove("oculto");
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  async function cargarTandaPreparada() {
+    var boton = $("#btnImpTanda");
+    mostrarError("#errorImportar", "");
+    ocupado(boton, "Cargando…");
+    try {
+      var r = await fetch("importar/lista.json", { cache: "no-store" });
+      if (!r.ok) throw new Error("La tanda preparada ya no está.");
+      impPlan = revisarPlan(await r.text());
+      impFotos = {};
+      pintarImportacion();
+
+      for (var i = 0; i < impPlan.articulos.length; i++) {
+        var nombre = impPlan.articulos[i].archivo;
+        boton.textContent = "Cargando… " + (i + 1) + " de " + impPlan.articulos.length;
+        try {
+          var f = await fetch("importar/" + encodeURIComponent(nombre));
+          if (!f.ok) continue;
+          var blob = await f.blob();
+          impFotos[nombre] = new File([blob], nombre, { type: blob.type || "image/jpeg" });
+        } catch (err) { /* esa foto se queda sin cargar y la fila lo dice */ }
+      }
+      pintarImportacion();
+    } catch (err) {
+      mostrarError("#errorImportar", enCastellano(err));
+    } finally {
+      libre(boton);
+      boton.textContent = "Cargar la tanda preparada";
+    }
+  }
+
+  function recibirFotos(archivos) {
+    for (var i = 0; i < archivos.length; i++) {
+      if (/^image\//.test(archivos[i].type || "")) impFotos[archivos[i].name] = archivos[i];
+    }
+    pintarImportacion();
+  }
+
+  // La categoria puede ser una que todavia no existe: viene en la lista.
+  function impCatNombre(id) {
+    if (!id) return "sin categoría";
+    var nueva = (impPlan && impPlan.categoriasNuevas || []).find(function (c) { return c.id === id; });
+    return nueva ? nueva.nombre : catNombre(id);
+  }
+
+  function pintarImportacion() {
+    var caja = $("#impLista");
+    if (!impPlan) {
+      caja.innerHTML = "";
+      $("#impResumen").textContent = "";
+      $("#btnImpSubir").disabled = true;
+      return;
+    }
+
+    var listos = 0;
+    caja.innerHTML = impPlan.articulos.map(function (a, i) {
+      var foto = impFotos[a.archivo];
+      if (foto) listos++;
+      var precio = Number(a.precio) > 0 ? dinero(a.precio) : "Consultar precio";
+      return '<div class="importador__fila" id="imp-' + i + '">' +
+        (foto
+          ? '<img class="importador__foto" alt="" src="' + URL.createObjectURL(foto) + '">'
+          : '<div class="importador__falta" title="Falta la foto">📷</div>') +
+        '<div class="importador__texto">' +
+          "<b>" + escapar(a.nombre) + "</b>" +
+          "<span>" + escapar(impCatNombre(a.categoria)) +
+            " · " + precio + " · " + (Number(a.stock) || 0) + " en existencia</span>" +
+        "</div>" +
+        '<div class="importador__estado" data-estado>' +
+          (foto ? "listo" : '<span class="importador__estado--mal">falta la foto</span>') +
+        "</div>" +
+      "</div>";
+    }).join("");
+
+    $("#impResumen").textContent =
+      listos + " de " + impPlan.articulos.length + " con su foto" +
+      (listos < impPlan.articulos.length ? " — elige las que faltan" : " — listos para subir");
+    $("#btnImpSubir").disabled = !listos || importando;
+  }
+
+  function marcarFila(i, texto, clase) {
+    var celda = document.querySelector("#imp-" + i + " [data-estado]");
+    if (celda) celda.innerHTML = clase ? '<span class="' + clase + '">' + texto + "</span>" : texto;
+  }
+
+  // Las categorias que la lista nombra y todavia no existen. Sin esto, la
+  // base rechaza el articulo entero por una categoria que falta.
+  async function crearCategorias() {
+    var nuevas = (impPlan.categoriasNuevas || []).filter(function (c) {
+      return c && c.id && !CATEGORIAS.some(function (x) { return x.id === c.id; });
+    });
+    if (!nuevas.length) return;
+    var r = await sb.from("categorias").insert(nuevas);
+    if (r.error) throw r.error;
+    await recargar();
+  }
+
+  async function importarTodo() {
+    if (importando || !impPlan) return;
+    mostrarError("#errorImportar", "");
+
+    var boton = $("#btnImpSubir");
+    importando = true;
+    ocupado(boton, "Subiendo…");
+    var subidos = 0, fallaron = 0;
+
+    try {
+      await crearCategorias();
+
+      for (var i = 0; i < impPlan.articulos.length; i++) {
+        var a = impPlan.articulos[i];
+        var foto = impFotos[a.archivo];
+        if (!foto) continue;
+
+        marcarFila(i, "subiendo…");
+        try {
+          var medio = await subirUno(foto);
+          var datos = {
+            nombre: String(a.nombre).trim(),
+            categoria: a.categoria || "",
+            precio: Number(a.precio) || 0,
+            precioAntes: Number(a.precioAntes) || 0,
+            medios: [medio],
+            descripcion: String(a.descripcion || "").trim(),
+            stock: Number(a.stock) || 0,
+            destacado: !!a.destacado,
+            etiquetas: Array.isArray(a.etiquetas) ? a.etiquetas : [],
+          };
+          var r = await sb.from("productos").insert(CO_DATOS.haciaBase(datos));
+          if (r.error) throw r.error;
+          subidos++;
+          marcarFila(i, "subido ✓", "importador__estado--bien");
+        } catch (err) {
+          fallaron++;
+          marcarFila(i, enCastellano(err), "importador__estado--mal");
+        }
+        boton.textContent = "Subiendo… " + (subidos + fallaron) + " de " + impPlan.articulos.length;
+      }
+
+      $("#impResumen").textContent =
+        subidos + " artículo(s) subidos" + (fallaron ? ", " + fallaron + " con problema" : "") + ".";
+      if (subidos) await recargar();
+    } catch (err) {
+      mostrarError("#errorImportar", enCastellano(err));
+    } finally {
+      importando = false;
+      libre(boton);
+      boton.textContent = "Subir todo";
+      // Lo ya subido no se vuelve a subir si le da otra vez.
+      $("#btnImpSubir").disabled = true;
+    }
+  }
+
   /* ------------------------------------------------------------ Arranque */
 
   async function iniciar() {
@@ -605,6 +827,30 @@
       var b = e.target.closest("[data-medio]");
       if (b) tocarMedio(b.dataset.medio, Number(b.dataset.i));
     });
+
+    $("#btnImportador").addEventListener("click", function () {
+      var abrir = $("#importador").classList.contains("oculto");
+      reiniciarImportador();
+      abrirImportador(abrir);
+      if (abrir) hayTandaPreparada();
+    });
+    $("#btnImpTanda").addEventListener("click", cargarTandaPreparada);
+    $("#btnImpCerrar").addEventListener("click", function () {
+      if (importando) return;
+      reiniciarImportador();
+      abrirImportador(false);
+    });
+    $("#btnImpLista").addEventListener("click", function () { $("#fImpLista").click(); });
+    $("#btnImpFotos").addEventListener("click", function () { $("#fImpFotos").click(); });
+    $("#fImpLista").addEventListener("change", function (e) {
+      if (e.target.files[0]) elegirLista(e.target.files[0]);
+      e.target.value = "";
+    });
+    $("#fImpFotos").addEventListener("change", function (e) {
+      if (e.target.files.length) recibirFotos(e.target.files);
+      e.target.value = "";
+    });
+    $("#btnImpSubir").addEventListener("click", importarTodo);
 
     $("#listado").addEventListener("click", function (e) {
       var ed = e.target.closest("[data-editar]");
