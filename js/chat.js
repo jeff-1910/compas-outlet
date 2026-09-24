@@ -27,7 +27,10 @@
   function comoHtml(texto) {
     return escapar(texto)
       .replace(/(https?:\/\/[^\s<]+)/g, function (u) {
-        return '<a href="' + u + '" target="_blank" rel="noopener">' + u + "</a>";
+        // El mismo wa.me se ve igual, pero desde una computadora lleva a
+        // WhatsApp Web: la aplicacion de escritorio no abre el chat.
+        var destino = CO_DATOS.waParaAqui(u).replace(/&/g, "&amp;");
+        return '<a href="' + destino + '" target="_blank" rel="noopener">' + u + "</a>";
       })
       .replace(/\n/g, "<br>");
   }

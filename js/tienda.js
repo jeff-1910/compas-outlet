@@ -132,9 +132,9 @@
       .join("");
 
     // WhatsApp
-    const wa = "https://wa.me/" + CONFIG.whatsapp;
+    const saludo = "Hola " + CONFIG.nombre + ", quisiera informacion sobre sus productos.";
     $$("[data-wa]").forEach((a) => {
-      a.href = wa + "?text=" + encodeURIComponent("Hola " + CONFIG.nombre + ", quisiera informacion sobre sus productos.");
+      a.href = CO_DATOS.enlaceWa(saludo);
     });
 
     // Boton del grupo de WhatsApp: solo aparece si hay enlace configurado.
@@ -520,7 +520,7 @@
         "* " + p.nombre + "\n" +
         "* Precio: " + precio(p.precio) + "\n\n" +
         "Esta disponible?";
-    return "https://wa.me/" + CONFIG.whatsapp + "?text=" + encodeURIComponent(txt);
+    return CO_DATOS.enlaceWa(txt);
   }
 
   function cerrarFicha() {
@@ -669,7 +669,7 @@
     txt += "\n*TOTAL: " + precio(total) + "*\n\n";
     txt += "Quedo atento para coordinar el pago y la entrega.";
 
-    window.open("https://wa.me/" + CONFIG.whatsapp + "?text=" + encodeURIComponent(txt), "_blank");
+    window.open(CO_DATOS.enlaceWa(txt), "_blank");
   }
 
   /* ----------------------------------------------------------------- Aviso */

@@ -138,8 +138,53 @@ var CO_DATOS = (function () {
     }
   }
 
+  /* ------------------------------------------------------------ WhatsApp */
+  // Desde el telefono, un "wa.me/506..." abre la aplicacion justo en el chat.
+  // Desde una computadora no: WhatsApp mete una pagina intermedia y su boton
+  // "Abrir aplicacion" abre el programa pero no la conversacion, asi que el
+  // compa se queda mirando su lista de chats sin saber a quien escribirle, y
+  // ahi se pierde el pedido. En computadora lo mandamos derecho a WhatsApp
+  // Web, que si abre el chat con el mensaje ya escrito.
+
+  function enComputadora() {
+    var ua = navigator.userAgent || "";
+    if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) return false;
+    // Los iPad nuevos dicen ser una Mac; los delata la pantalla tactil.
+    if (navigator.maxTouchPoints > 1 && /Macintosh/.test(ua)) return false;
+    return true;
+  }
+
+  function soloDigitos(n) {
+    return String(n == null ? "" : n).replace(/[^0-9]/g, "");
+  }
+
+  function enlaceWa(texto, numero) {
+    var n = soloDigitos(numero || (typeof CONFIG !== "undefined" ? CONFIG.whatsapp : ""));
+    var t = String(texto || "");
+    if (enComputadora()) {
+      return "https://web.whatsapp.com/send?phone=" + n + (t ? "&text=" + encodeURIComponent(t) : "");
+    }
+    return "https://wa.me/" + n + (t ? "?text=" + encodeURIComponent(t) : "");
+  }
+
+  // El mismo arreglo para un wa.me que viene escrito dentro de un texto,
+  // como los que manda el asistente de la burbuja.
+  function waParaAqui(url) {
+    var u = String(url || "");
+    var marca = "https://wa.me/";
+    if (!enComputadora() || u.indexOf(marca) !== 0) return url;
+    var resto = u.slice(marca.length);
+    var corte = resto.indexOf("?text=");
+    var numero = corte < 0 ? resto : resto.slice(0, corte);
+    var texto = corte < 0 ? "" : resto.slice(corte + 6);
+    if (!/^[0-9]+$/.test(numero)) return url;
+    return "https://web.whatsapp.com/send?phone=" + numero + (texto ? "&text=" + texto : "");
+  }
+
   return {
     cargar: cargar,
+    enlaceWa: enlaceWa,
+    waParaAqui: waParaAqui,
     cliente: obtenerCliente,
     configurado: configurado,
     desdeBase: desdeBase,
