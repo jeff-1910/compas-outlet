@@ -20,17 +20,17 @@ const CO_LEGAL = {
 
   // El nombre legal: tu nombre completo si vendes como persona fisica, o el
   // nombre de la sociedad si esta a nombre de una empresa.
-  razonSocial: "",                                        // <-- FALTA
+  razonSocial: "Jefferson Pérez Vargas",
 
   // Cedula fisica o juridica. La ley del consumidor (7472) pide que el que
   // vende se pueda identificar. Sin esto, si un Compa reclama, el negocio
   // queda como "no identificado".
-  cedula: "",                                             // <-- FALTA
+  cedula: "4-0240-0603",
 
   // Direccion fisica donde opera el negocio (provincia, canton, distrito y
   // una sena). No hace falta la casa exacta si vendes desde tu casa, pero
   // si al menos el canton.
-  direccion: "",                                          // <-- FALTA
+  direccion: "Heredia, San Francisco, Santa Cecilia, calle La Deportiva, 300 m sur de Taco Bell",
   pais: "Costa Rica",
 
   /* ------------------------------------------------------- Contacto ----- */
