@@ -89,6 +89,60 @@
   let carrito = leer("co_carrito", []);
   let productoAbierto = null;
   let cantidadModal = 1;
+  // Donde estaba el cursor antes de abrir la ficha o el carrito, para
+  // devolverlo ahi mismo al cerrar.
+  let focoPrevio = null;
+
+  /* --------------------------------------------- Foco de las ventanitas --
+     Cuando se abre la ficha de un articulo o el carrito, quien navega con el
+     tabulador se quedaba atras: el cursor seguia en la pagina de abajo y el
+     tabulador recorria el catalogo entero por detras de la ventana. Estas
+     tres funciones mueven el foco adentro, lo mantienen adentro mientras la
+     ventana este abierta, y lo devuelven a su sitio al cerrar. */
+
+  function enfocables(caja) {
+    return Array.from(
+      caja.querySelectorAll('a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])')
+    ).filter((el) => el.offsetParent !== null);
+  }
+
+  function abrirVentana(caja) {
+    focoPrevio = document.activeElement;
+    const lista = enfocables(caja);
+    if (lista.length) lista[0].focus();
+  }
+
+  function cerrarVentana() {
+    if (focoPrevio && typeof focoPrevio.focus === "function") focoPrevio.focus();
+    focoPrevio = null;
+  }
+
+  // El tabulador da la vuelta dentro de la ventana en lugar de escaparse.
+  function atraparTabulador(e) {
+    if (e.key !== "Tab") return;
+    const abierta = !$("#modal").classList.contains("oculto")
+      ? $("#modal .modal")
+      : !$("#panelCarrito").classList.contains("oculto")
+      ? $("#panelCarrito .carrito")
+      : null;
+    if (!abierta) return;
+
+    const lista = enfocables(abierta);
+    if (!lista.length) return;
+    const primero = lista[0];
+    const ultimo = lista[lista.length - 1];
+
+    if (e.shiftKey && document.activeElement === primero) {
+      e.preventDefault();
+      ultimo.focus();
+    } else if (!e.shiftKey && document.activeElement === ultimo) {
+      e.preventDefault();
+      primero.focus();
+    } else if (!abierta.contains(document.activeElement)) {
+      e.preventDefault();
+      primero.focus();
+    }
+  }
 
   /* ------------------------------------------------ Datos del negocio en HTML */
 
@@ -392,7 +446,14 @@
         "</div>" +
         '<div class="tarjeta__cuerpo">' +
           '<span class="tarjeta__cat">' + escapar(catNombre(p.categoria)) + "</span>" +
-          '<h3 class="tarjeta__nombre" data-ver="' + p.id + '">' + escapar(p.nombre) + "</h3>" +
+          // El nombre abre la ficha. Va como <button> de verdad, no como texto
+          // con un clic encima: asi tambien se llega con el tabulador y los
+          // lectores de pantalla lo anuncian como algo que se puede abrir.
+          // Visualmente queda igual que antes.
+          '<h3 class="tarjeta__nombre">' +
+            '<button type="button" class="tarjeta__nombre-btn" data-ver="' + p.id +
+            '">' + escapar(p.nombre) + "</button>" +
+          "</h3>" +
           bloquePrecio +
           '<div class="tarjeta__pie">' + boton + "</div>" +
         "</div>" +
@@ -497,7 +558,11 @@
           "</p>" +
           (agotado || consultar
             ? ""
-            : '<div class="cantidad"><button data-cant="-1">−</button><span id="cantValor">1</span><button data-cant="1">+</button></div>') +
+            : '<div class="cantidad">' +
+                '<button type="button" data-cant="-1" aria-label="Quitar uno">−</button>' +
+                '<span id="cantValor">1</span>' +
+                '<button type="button" data-cant="1" aria-label="Agregar uno">+</button>' +
+              "</div>") +
           '<div class="detalle__acciones">' + acciones +
             '<button type="button" class="btn btn--claro btn--bloque" id="compartirFicha">' +
             ICO.compartir + " Compartir este artículo</button>" +
@@ -507,6 +572,7 @@
 
     $("#modal").classList.remove("oculto");
     document.body.style.overflow = "hidden";
+    abrirVentana($("#modal .modal"));
     activarGaleria();
     history.replaceState(null, "", "#p=" + p.id);
   }
@@ -528,6 +594,7 @@
     $("#modal").classList.add("oculto");
     document.body.style.overflow = "";
     productoAbierto = null;
+    cerrarVentana();
   }
 
   /* -------------------------------------------------------------- Carrito */
@@ -627,14 +694,19 @@
               '<p class="linea__nombre">' + escapar(l.producto.nombre) + "</p>" +
               '<p class="linea__precio">' + precio(l.producto.precio) + " c/u</p>" +
               '<div class="linea__ctrl">' +
-                '<button data-menos="' + l.producto.id + '" aria-label="Quitar uno">−</button>' +
+                // El nombre va dentro de la etiqueta: con varios articulos en
+                // el pedido, "quitar uno" a secas no dice de cual.
+                '<button type="button" data-menos="' + l.producto.id +
+                '" aria-label="Quitar uno de ' + escapar(l.producto.nombre) + '">−</button>' +
                 "<span>" + l.cantidad + "</span>" +
-                '<button data-mas="' + l.producto.id + '" aria-label="Agregar uno">+</button>' +
+                '<button type="button" data-mas="' + l.producto.id +
+                '" aria-label="Agregar uno de ' + escapar(l.producto.nombre) + '">+</button>' +
               "</div>" +
             "</div>" +
             "<div style=\"text-align:right\">" +
               '<div class="linea__total">' + precio(l.subtotal) + "</div>" +
-              '<button class="linea__quitar" data-quitar="' + l.producto.id + '">Quitar</button>' +
+              '<button type="button" class="linea__quitar" data-quitar="' + l.producto.id +
+              '" aria-label="Quitar ' + escapar(l.producto.nombre) + ' del pedido">Quitar</button>' +
             "</div>" +
           "</div>"
       )
@@ -650,10 +722,12 @@
   function abrirCarrito() {
     $("#panelCarrito").classList.remove("oculto");
     document.body.style.overflow = "hidden";
+    abrirVentana($("#panelCarrito .carrito"));
   }
   function cerrarCarrito() {
     $("#panelCarrito").classList.add("oculto");
     document.body.style.overflow = "";
+    cerrarVentana();
   }
 
   function enviarPedido() {
@@ -834,6 +908,7 @@
 
     // Escape cierra
     document.addEventListener("keydown", (e) => {
+      atraparTabulador(e);
       if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && !$("#modal").classList.contains("oculto")) {
         return moverGaleria(e.key === "ArrowLeft" ? -1 : 1);
       }

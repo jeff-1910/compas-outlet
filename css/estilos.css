@@ -1169,3 +1169,223 @@ button { font-family: inherit; cursor: pointer; }
   /* En el celular se desliza con el dedo: las flechas solo estorban */
   .galeria__flecha { display: none; }
 }
+
+/* =========================================================================
+   ACCESIBILIDAD Y PAGINAS LEGALES
+   Agregado el 24 de setiembre de 2026.
+   ========================================================================= */
+
+/* ------------------------------------------------- Colores que se leen --
+   El rojo de la marca sobre el azul oscuro del logo queda en 3:1, y para
+   texto pequeno hace falta 4.5:1. Sobre fondo oscuro usamos este rojo mas
+   claro: es el mismo tono, pero se lee. Sobre blanco seguimos con el rojo
+   de siempre, que ahi si contrasta de sobra. */
+:root {
+  --rojo-claro: #ff8a96;
+  /* El verde de "Ahorras..." estaba en 3.9:1 sobre blanco. Este llega a 6:1. */
+  --green: #15703f;
+}
+:root[data-tema="oscuro"] {
+  /* Y sobre el azul oscuro, al reves: el verde tiene que aclararse. */
+  --green: #4fd18b;
+}
+
+.barra-aviso strong { color: var(--rojo-claro); }
+.hero__pill {
+  color: var(--rojo-claro);
+  border-color: rgba(255, 138, 150, .5);
+  background: rgba(206, 17, 38, .28);
+}
+.pie a:hover { color: var(--rojo-claro); }
+:root[data-tema="oscuro"] .tarjeta__nombre:hover { color: var(--rojo-claro); }
+
+/* ------------------------------------------------------- Foco visible --
+   Quien navega con el tabulador (por no poder usar el mouse, o por rapidez)
+   necesita ver en donde esta parado. El navegador trae un recuadro por
+   defecto, pero se pierde contra los fondos oscuros, asi que lo ponemos
+   nosotros y con un color que se ve sobre claro y sobre oscuro. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--rojo-claro);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.hero :focus-visible,
+.pie :focus-visible,
+.barra-aviso :focus-visible { outline-color: #fff; }
+
+/* Saltar al contenido: el primer tabulador de la pagina. Se mantiene
+   escondido hasta que alguien lo enfoca. */
+.saltar {
+  position: absolute;
+  left: 12px; top: -60px;
+  z-index: 200;
+  background: var(--rojo);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  font-weight: 600;
+  transition: top .15s;
+}
+.saltar:focus { top: 0; }
+
+/* El nombre del articulo abre su ficha. Antes era un <h3> que solo
+   respondia al mouse; ahora es un boton de verdad, para que tambien
+   funcione con el tabulador y lo anuncien los lectores de pantalla.
+   Por fuera se ve igual que antes. */
+.tarjeta__nombre-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+}
+
+/* A quien le molesta el movimiento en pantalla, no se lo hacemos. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}
+
+/* --------------------------------------------------------- Letra chica --
+   El avisito bajo el chat y bajo el carrito. */
+.aviso-datos {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  margin: 6px 0 0;
+  text-align: center;
+}
+.aviso-datos a { text-decoration: underline; }
+
+/* -------------------------------------------------- Paginas legales ----- */
+
+.legal-cabecera {
+  background: var(--azul-900);
+  color: #fff;
+  padding: 18px 0;
+}
+.legal-cabecera__fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.legal-cabecera a { color: #cfe0f5; font-size: 14px; }
+.legal-cabecera a:hover { color: #fff; text-decoration: underline; }
+.legal-cabecera__marca { font-weight: 700; font-size: 17px; letter-spacing: -.3px; color: #fff; }
+
+.legal {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 20px 72px;
+  line-height: 1.7;
+}
+.legal h1 { margin: 0 0 6px; font-size: 28px; letter-spacing: -.5px; }
+.legal .fecha { color: var(--text-muted); font-size: 14px; margin: 0 0 28px; }
+.legal h2 {
+  margin: 36px 0 10px;
+  font-size: 19px;
+  letter-spacing: -.2px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.legal h3 { margin: 22px 0 6px; font-size: 15.5px; }
+.legal p, .legal li { margin: 0 0 10px; }
+.legal ul, .legal ol { padding-left: 1.3rem; }
+.legal a { color: var(--rojo); text-decoration: underline; }
+.legal a:hover { color: var(--rojo-oscuro); }
+:root[data-tema="oscuro"] .legal a { color: var(--rojo-claro); }
+
+/* El recuadro de "esto es lo importante" al inicio de cada pagina. */
+.legal__resumen {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--rojo);
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+  margin: 0 0 30px;
+}
+.legal__resumen p:last-child { margin-bottom: 0; }
+
+/* Datos del negocio: una lista de dos columnas que en el telefono se apila. */
+.legal__datos {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 2px;
+}
+.legal__datos li {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  margin: 0;
+}
+.legal__datos dt, .legal__datos .etiqueta { color: var(--text-muted); font-size: 14px; }
+@media (max-width: 560px) {
+  .legal__datos li { grid-template-columns: 1fr; gap: 2px; }
+}
+
+/* Navegacion entre las paginas legales, al pie de cada una. */
+.legal__otras {
+  margin-top: 44px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  font-size: 14px;
+}
+
+/* Enlaces legales dentro del pie de la tienda. */
+.pie__legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0 0 14px;
+  padding: 0 0 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, .12);
+  font-size: 13px;
+}
+.pie__legal a { text-decoration: underline; }
+.pie__datos {
+  margin: 14px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, .12);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #93a6c0;
+}
+
+/* El avisito del chat va pegado abajo, dentro del panel que tiene altura
+   fija: si no le decimos que no se encoja, se come el ultimo mensaje. */
+#chatAviso {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0 14px 11px;
+  background: var(--surface);
+  text-align: left;
+}
+
+/* Texto que solo leen los lectores de pantalla. Sirve para poner titulos
+   que dan estructura a la pagina sin cambiar como se ve. */
+.solo-lectores {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

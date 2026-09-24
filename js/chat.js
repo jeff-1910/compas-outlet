@@ -51,19 +51,27 @@
       "</button>" +
       '<section class="chat-panel oculto" id="chatPanel" aria-label="Chat de la tienda">' +
         '<header class="chat-cabecera">' +
-          '<div><strong>Asistente</strong><span>Te ayudo a encontrar lo que buscás</span></div>' +
+          '<div><strong>Asistente automático</strong><span>Te ayudo a encontrar lo que buscás</span></div>' +
           '<button id="chatCerrar" aria-label="Cerrar el chat">×</button>' +
         "</header>" +
         '<div class="chat-mensajes" id="chatMensajes" role="log" aria-live="polite"></div>' +
         '<form class="chat-pie" id="chatForm">' +
           '<input id="chatEntrada" type="text" autocomplete="off" ' +
           'placeholder="Escribí tu pregunta..." aria-label="Tu mensaje" maxlength="1500">' +
-          '<button type="submit" id="chatEnviar" aria-label="Enviar">' +
+          '<button type="submit" id="chatEnviar" aria-label="Enviar mensaje">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
             'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
             '<path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>' +
           "</button>" +
         "</form>" +
+        // Quien escribe tiene derecho a saber, ANTES de escribir, que del otro
+        // lado no hay una persona y que su mensaje sale de su computadora.
+        '<p class="aviso-datos" id="chatAviso">' +
+          "Respuestas generadas por un asistente automático. Tu mensaje se " +
+          "procesa para poder contestarte y no se guarda. No escribás datos de " +
+          "tarjetas ni contraseñas. " +
+          '<a href="privacidad.html">Más información</a>.' +
+        "</p>" +
       "</section>";
 
     var cont = document.createElement("div");
