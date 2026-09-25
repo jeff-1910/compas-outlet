@@ -23,8 +23,16 @@ const CONFIG = {
   // --- Contacto ---
   // Numero de WhatsApp en formato internacional, SOLO digitos, sin + ni espacios.
   // Costa Rica: 506 + los 8 digitos.
-  // Es el numero del bot: contesta solo, 24 horas, y anota los leads en la hoja.
-  whatsapp: "50670431317",
+  //
+  // Es el WhatsApp del local, el que atienden los compas del equipo. Aqui van a
+  // parar TODOS los botones de la pagina: el flotante, "Consultar precio", el
+  // de cada articulo y el del pedido.
+  //
+  // Antes esto apuntaba al bot (50670431317). El bot quedo apagado el 24 de
+  // setiembre de 2026 para que las ventas las cierre una persona. Cuando se
+  // quiera volver a encender, se cambia este numero de vuelta y se levanta el
+  // servicio "compas-bot" en Railway.
+  whatsapp: "50670090544",
 
   // Enlace de invitacion a tu grupo de WhatsApp (el de tu bio de Instagram).
   // En la captura salia cortado: "chat.whatsapp.com/HyBRK7wvDPTB1DnM3Sto..."

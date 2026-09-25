@@ -22,7 +22,9 @@ const MAX_TOKENS = 8000;        // techo de la respuesta (incluye razonamiento)
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://bthczvrkrnzzwlnqunlh.supabase.co";
 const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || "sb_publishable_jxwBsbIkHkoIgTjrlT1jjg_LZj8IkN1";
 
-const WHATSAPP = "50670431317"; // el bot de WhatsApp, no el telefono del equipo
+// El WhatsApp del local, que lo atienden los compas del equipo. El bot de
+// WhatsApp (50670431317) quedo apagado: ya no hay a quien mandar la gente ahi.
+const WHATSAPP = "50670090544";
 const MONEDA = "₡";
 
 /* ------------------------------------------------------------- Catalogo */

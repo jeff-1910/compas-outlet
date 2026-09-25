@@ -37,13 +37,14 @@ const CO_LEGAL = {
 
   email: "compasoutlet@gmail.com",
 
-  // WhatsApp del equipo: es el que atiende ventas, reclamos y devoluciones.
+  // WhatsApp del local: el unico numero de atencion. Lo contestan los compas
+  // del equipo, no un robot. Aqui llegan ventas, reclamos y devoluciones.
   whatsappEquipo: "50670090544",
   whatsappEquipoVisible: "+506 7009 0544",
 
-  // WhatsApp del catalogo: lo contesta el asistente automatico.
-  whatsappBot: "50670431317",
-  whatsappBotVisible: "+506 7043 1317",
+  // Hubo un segundo numero (+506 7043 1317) que contestaba un asistente
+  // automatico. Quedo apagado el 24 de setiembre de 2026 y por eso ya no se
+  // publica en ningun lado: anunciarlo seria mandar gente a un numero mudo.
 
   /* -------------------------------------------------- Como se vende ----- */
 
