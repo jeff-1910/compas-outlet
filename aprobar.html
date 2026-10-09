@@ -60,6 +60,9 @@
   }
   .tarjeta.yendose{opacity:0; transform:scale(.96)}
   .tarjeta.vencida .cuerpo{opacity:.55}
+  .galeria{display:flex; overflow-x:auto; scroll-snap-type:x mandatory; background:#fff; -webkit-overflow-scrolling:touch}
+  .galeria img{flex:0 0 100%; width:100%; aspect-ratio:1/1; object-fit:contain; scroll-snap-align:start; background:#fff}
+  .nfotos{font-size:.8rem; color:var(--text-muted); margin:0 0 9px}
   .foto{width:100%; aspect-ratio:1/1; object-fit:cover; background:var(--surface-2); display:block}
   .cuerpo{padding:14px}
   .fila-meta{display:flex; flex-wrap:wrap; gap:7px; align-items:center; margin-bottom:9px}
@@ -124,7 +127,8 @@
 <header>
   <div class="titulo">Aprobar <span>Compas Outlet</span></div>
   <nav>
-    <button id="tabPosts" aria-selected="true">Posts<span class="cuenta" id="nPosts">·</span></button>
+    <button id="tabArt" aria-selected="true">Artículos<span class="cuenta" id="nArt">·</span></button>
+    <button id="tabPosts" aria-selected="false">Posts<span class="cuenta" id="nPosts">·</span></button>
     <button id="tabSeg" aria-selected="false">Mensajes<span class="cuenta" id="nSeg">·</span></button>
   </nav>
 </header>
@@ -142,8 +146,10 @@
   var GUARDA = "compas-aprobar-clave";
   var main = document.getElementById("main");
   var brindis = document.getElementById("brindis");
-  var vista = "posts";
-  var datos = { posts: [], seguimientos: [] };
+  var vista = "articulos";
+  var datos = { posts: [], seguimientos: [], articulos: [] };
+  var DONDE = { post: "posts", seguimiento: "seguimientos", articulo: "articulos" };
+  var AREAS = { muebles: "Muebles", hogar: "Hogar", cocina: "Cocina", electronicos: "Electrónicos", ropa: "Ropa", calzado: "Calzado", otros: "Varios", herramientas: "Herramientas", jardin: "Jardín y exteriores", juguetes: "Juguetes", cama: "Ropa de cama" };
 
   /* La clave llega en el enlace. Se guarda en el telefono y se borra de la
      barra de direcciones, para que no quede a la vista ni en el historial. */
@@ -209,6 +215,29 @@
       "</article>";
   }
 
+  function tarjetaArticulo(a) {
+    var fotos = a.fotos || [];
+    return '' +
+      '<article class="tarjeta" data-tipo="articulo" data-fila="' + a.id + '">' +
+        (fotos.length
+          ? '<div class="galeria">' + fotos.map(function (u) { return '<img src="' + escapar(u) + '" alt="" loading="lazy">'; }).join("") + "</div>"
+          : "") +
+        '<div class="cuerpo">' +
+          '<div class="fila-meta">' +
+            '<span class="etiqueta ok">' + escapar(AREAS[a.categoria] || a.categoria) + "</span>" +
+            '<span class="etiqueta">' + escapar(a.cantidad) + " pz</span>" +
+          "</div>" +
+          '<p class="producto">' + escapar(a.nombre) + "</p>" +
+          '<p class="nfotos">' + fotos.length + " foto(s)" + (fotos.length > 1 ? " · deslizá para verlas" : "") + " · sin precio («Consultar precio»)</p>" +
+          '<p class="texto">' + escapar(a.descripcion) + "</p>" +
+        "</div>" +
+        '<div class="botones">' +
+          '<button class="accion no" data-decision="no">No va</button>' +
+          '<button class="accion si" data-decision="si">Aprobar</button>' +
+        "</div>" +
+      "</article>";
+  }
+
   function tarjetaSeguimiento(s) {
     return '' +
       '<article class="tarjeta' + (s.vencido ? " vencida" : "") + '" data-tipo="seguimiento" data-fila="' + s.fila + '">' +
@@ -233,20 +262,25 @@
   }
 
   function dibujar() {
+    document.getElementById("nArt").textContent = datos.articulos.length;
+    document.getElementById("tabArt").setAttribute("aria-selected", vista === "articulos");
     document.getElementById("nPosts").textContent = datos.posts.length;
     document.getElementById("nSeg").textContent = datos.seguimientos.length;
     document.getElementById("tabPosts").setAttribute("aria-selected", vista === "posts");
     document.getElementById("tabSeg").setAttribute("aria-selected", vista === "seg");
 
-    var lista = vista === "posts" ? datos.posts : datos.seguimientos;
+    var lista = vista === "articulos" ? datos.articulos : vista === "posts" ? datos.posts : datos.seguimientos;
     if (!lista.length) {
       main.innerHTML = '<p class="mensaje"><strong>Todo al día</strong>' +
-        (vista === "posts" ? "No hay posts esperando." : "No hay mensajes esperando.") + "</p>";
+        (vista === "articulos" ? "No hay artículos nuevos esperando." : vista === "posts" ? "No hay posts esperando." : "No hay mensajes esperando.") + "</p>";
       return;
     }
 
     var html = "";
-    if (vista === "posts") {
+    if (vista === "articulos") {
+      html += '<p class="aviso">Un artículo aprobado <b>se publica en la tienda</b> en el momento, con todas sus fotos y sin precio. «No va» lo descarta y no vuelve a salir.</p>';
+      html += lista.map(tarjetaArticulo).join("");
+    } else if (vista === "posts") {
       html += '<p class="aviso">Instagram y Facebook todavía no están conectados, así que un post aprobado ' +
               "queda <b>listo para copiar</b>. Tocá «Aprobar» y después «Copiar el texto» para pegarlo.</p>";
       html += lista.map(tarjetaPost).join("");
@@ -260,13 +294,13 @@
   /* -------------------------------------------------------------- Acciones */
 
   function quitar(fila, tipo) {
-    var donde = tipo === "post" ? "posts" : "seguimientos";
-    datos[donde] = datos[donde].filter(function (x) { return x.fila !== fila; });
+    var donde = DONDE[tipo];
+    datos[donde] = datos[donde].filter(function (x) { return (tipo === "articulo" ? x.id : x.fila) !== fila; });
   }
 
   function buscar(fila, tipo) {
-    var donde = tipo === "post" ? "posts" : "seguimientos";
-    return datos[donde].filter(function (x) { return x.fila === fila; })[0];
+    var donde = DONDE[tipo];
+    return datos[donde].filter(function (x) { return (tipo === "articulo" ? x.id : x.fila) === fila; })[0];
   }
 
   main.addEventListener("click", function (evento) {
@@ -302,7 +336,7 @@
         if (!res.ok) throw new Error(res.d && res.d.error ? res.d.error : "Falló");
         tarjeta.classList.add("yendose");
         setTimeout(function () { quitar(fila, tipo); dibujar(); }, 260);
-        avisar(decision === "si" ? "Aprobado ✅" : "Descartado");
+        avisar(decision === "si" ? (tipo === "articulo" ? "Publicado en la tienda ✅" : "Aprobado ✅") : "Descartado");
       })
       .catch(function (error) {
         Array.prototype.forEach.call(tarjeta.querySelectorAll("button"), function (b) { b.disabled = false; });
@@ -310,6 +344,7 @@
       });
   });
 
+  document.getElementById("tabArt").addEventListener("click", function () { vista = "articulos"; dibujar(); });
   document.getElementById("tabPosts").addEventListener("click", function () { vista = "posts"; dibujar(); });
   document.getElementById("tabSeg").addEventListener("click", function () { vista = "seg"; dibujar(); });
 
@@ -347,7 +382,7 @@
         return r.json();
       })
       .then(function (d) {
-        datos = { posts: d.posts || [], seguimientos: d.seguimientos || [] };
+        datos = { posts: d.posts || [], seguimientos: d.seguimientos || [], articulos: d.articulos || [] };
         dibujar();
       })
       .catch(function (error) {
@@ -360,7 +395,7 @@
   cargar();
   // Al volver a la pagina despues de un rato, se refresca sola.
   document.addEventListener("visibilitychange", function () {
-    if (!document.hidden && datos.posts.length + datos.seguimientos.length === 0) cargar();
+    if (!document.hidden && datos.posts.length + datos.seguimientos.length + datos.articulos.length === 0) cargar();
   });
 })();
 </script>

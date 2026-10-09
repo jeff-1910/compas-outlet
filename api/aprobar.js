@@ -27,6 +27,7 @@ import {
   marcarDecision,
   vigencia,
 } from "./_hoja.js";
+import { decidir, pendientes } from "./_borradores.js";
 
 /** Compara sin delatar por tiempo cuantos caracteres coinciden. */
 function claveValida(recibida) {
@@ -59,6 +60,25 @@ async function armarPosts(ahora) {
       foto: celdaTexto(valores, 12),
       ...vigencia(valores, ahora),
     }));
+}
+
+/** Articulos nuevos esperando: fotos, nombre, area y cantidad. Si Supabase falla, la pagina sigue con lo demas. */
+async function armarArticulos() {
+  try {
+    const { filas } = await pendientes(50);
+    return filas.map((b) => ({
+      id: b.id,
+      nombre: b.nombre,
+      descripcion: b.descripcion || "",
+      categoria: b.categoria || "otros",
+      cantidad: b.cantidad || 1,
+      marca: b.marca || "",
+      fotos: (Array.isArray(b.medios) ? b.medios : []).map((m) => m && m.url).filter(Boolean),
+    }));
+  } catch (error) {
+    console.error("[aprobar] articulos:", error);
+    return [];
+  }
 }
 
 async function armarSeguimientos(ahora) {
@@ -94,8 +114,8 @@ export default async function handler(peticion, respuesta) {
         return respuesta.status(401).json({ error: "Clave incorrecta." });
       }
       const ahora = new Date();
-      const [posts, seguimientos] = await Promise.all([armarPosts(ahora), armarSeguimientos(ahora)]);
-      return respuesta.status(200).json({ posts, seguimientos, diasValido: DIAS_VALIDO });
+      const [posts, seguimientos, articulos] = await Promise.all([armarPosts(ahora), armarSeguimientos(ahora), armarArticulos()]);
+      return respuesta.status(200).json({ posts, seguimientos, articulos, diasValido: DIAS_VALIDO });
     }
 
     if (peticion.method === "POST") {
@@ -103,6 +123,13 @@ export default async function handler(peticion, respuesta) {
         typeof peticion.body === "string" ? JSON.parse(peticion.body || "{}") : peticion.body || {};
       if (!claveValida(cuerpo.clave)) {
         return respuesta.status(401).json({ error: "Clave incorrecta." });
+      }
+      if (cuerpo.tipo === "articulo") {
+        const id = Number(cuerpo.fila);
+        if (!Number.isInteger(id) || id < 1) throw new Error("Fila invalida");
+        if (cuerpo.decision !== "si" && cuerpo.decision !== "no") throw new Error("Decision invalida");
+        const resultado = await decidir(id, cuerpo.decision);
+        return respuesta.status(200).json({ ok: true, decision: cuerpo.decision, yaDecidido: Boolean(resultado.yaDecidido) });
       }
       const celda = await marcarDecision(cuerpo.tipo, Number(cuerpo.fila), cuerpo.decision);
       return respuesta.status(200).json({ ok: true, celda, decision: cuerpo.decision });
