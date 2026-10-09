@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#071a45">
+<title>Aprobar — Compas Outlet</title>
+<link rel="icon" href="img/favicon.ico">
+<style>
+  :root{
+    --azul-900:#071a45; --azul-800:#0f2a66; --azul-700:#1a3f92; --azul-100:#e7ecf7;
+    --rojo:#ce1126; --rojo-suave:#fdecee;
+    --bg:#f6f7fa; --surface:#fff; --surface-2:#eff2f8; --border:#dfe4ee;
+    --text:#131c2e; --text-muted:#5a677d; --green:#1f9254; --ambar:#8a5a00; --ambar-suave:#fff6e0;
+    --radius:14px; --radius-sm:9px;
+    --shadow:0 1px 2px rgba(16,32,58,.06), 0 2px 8px rgba(16,32,58,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#071129; --surface:#0d1d3f; --surface-2:#132750; --border:#1e3766;
+      --text:#e9eefa; --text-muted:#94a6c6; --azul-100:#132750; --rojo-suave:#3d1119;
+      --ambar-suave:#3a2a05; --ambar:#f0c674;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--text); min-height:100dvh;
+    font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-text-size-adjust:100%;
+  }
+  header{
+    position:sticky; top:0; z-index:10; background:var(--azul-900); color:#fff;
+    padding:calc(12px + env(safe-area-inset-top)) 16px 0;
+  }
+  .titulo{display:flex; align-items:baseline; gap:8px; font-weight:700; font-size:1.05rem}
+  .titulo span{font-weight:400; font-size:.8rem; opacity:.75}
+  nav{display:flex; gap:4px; margin-top:12px}
+  nav button{
+    flex:1; border:0; background:transparent; color:#fff; opacity:.6;
+    font:inherit; font-weight:600; font-size:.9rem; padding:10px 4px;
+    border-bottom:3px solid transparent; cursor:pointer;
+  }
+  nav button[aria-selected="true"]{opacity:1; border-bottom-color:var(--rojo)}
+  nav .cuenta{
+    display:inline-block; min-width:21px; margin-left:5px; padding:1px 6px;
+    background:var(--rojo); border-radius:999px; font-size:.75rem; line-height:1.5;
+  }
+  main{max-width:620px; margin:0 auto; padding:16px 16px calc(32px + env(safe-area-inset-bottom))}
+  .aviso{
+    background:var(--azul-100); color:var(--text); border-radius:var(--radius-sm);
+    padding:11px 13px; font-size:.86rem; margin-bottom:16px;
+  }
+  .tarjeta{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:var(--shadow); margin-bottom:16px; overflow:hidden;
+    transition:opacity .25s, transform .25s;
+  }
+  .tarjeta.yendose{opacity:0; transform:scale(.96)}
+  .tarjeta.vencida .cuerpo{opacity:.55}
+  .foto{width:100%; aspect-ratio:1/1; object-fit:cover; background:var(--surface-2); display:block}
+  .cuerpo{padding:14px}
+  .fila-meta{display:flex; flex-wrap:wrap; gap:7px; align-items:center; margin-bottom:9px}
+  .etiqueta{
+    font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em;
+    padding:3px 8px; border-radius:999px; background:var(--surface-2); color:var(--text-muted);
+  }
+  .etiqueta.ok{background:#e6f5ec; color:var(--green)}
+  .etiqueta.hoy{background:var(--ambar-suave); color:var(--ambar)}
+  .etiqueta.mala{background:var(--rojo-suave); color:var(--rojo)}
+  @media (prefers-color-scheme: dark){ .etiqueta.ok{background:#0d2e1c; color:#5fd292} }
+  .producto{font-weight:700; font-size:1.02rem; margin:0 0 2px}
+  .precio{color:var(--text-muted); font-size:.88rem; margin:0 0 11px}
+  .gancho{font-weight:600; margin:0 0 9px}
+  .texto{white-space:pre-wrap; font-size:.93rem; color:var(--text); margin:0}
+  details{margin-top:11px; border-top:1px solid var(--border); padding-top:10px}
+  summary{cursor:pointer; font-size:.86rem; font-weight:600; color:var(--azul-700)}
+  @media (prefers-color-scheme: dark){ summary{color:#8fb2ff} }
+  details .extra{margin-top:11px}
+  details h4{margin:0 0 4px; font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted)}
+  details p{white-space:pre-wrap; font-size:.9rem; margin:0 0 7px}
+  .botones{display:flex; gap:9px; padding:0 14px 14px}
+  button.accion{
+    flex:1; border:0; border-radius:var(--radius-sm); font:inherit; font-weight:700;
+    padding:14px 8px; cursor:pointer; color:#fff; min-height:50px;
+  }
+  button.si{background:var(--green)}
+  button.no{background:var(--surface-2); color:var(--text-muted)}
+  button.copiar{
+    width:calc(100% - 28px); margin:0 14px 12px; padding:12px; min-height:46px;
+    border:1px solid var(--border); background:var(--surface-2); color:var(--text);
+    border-radius:var(--radius-sm); font:inherit; font-weight:600; cursor:pointer;
+  }
+  button:disabled{opacity:.5; cursor:default}
+  .mensaje{text-align:center; color:var(--text-muted); padding:48px 16px; font-size:.95rem}
+  .mensaje strong{display:block; color:var(--text); font-size:1.05rem; margin-bottom:6px}
+  .wa{
+    display:inline-block; margin-top:8px; color:var(--green);
+    font-weight:600; font-size:.88rem; text-decoration:none;
+  }
+  .brindis{
+    position:fixed; left:50%; bottom:calc(22px + env(safe-area-inset-bottom));
+    transform:translate(-50%,14px); background:var(--azul-900); color:#fff;
+    padding:11px 18px; border-radius:999px; font-size:.88rem; font-weight:600;
+    opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:20;
+  }
+  .brindis.visible{opacity:1; transform:translate(-50%,0)}
+  form.clave{max-width:380px; margin:48px auto; padding:0 16px; text-align:center}
+  form.clave input{
+    width:100%; padding:13px; margin:14px 0; font:inherit;
+    border:1px solid var(--border); border-radius:var(--radius-sm);
+    background:var(--surface); color:var(--text);
+  }
+  form.clave button{
+    width:100%; padding:14px; border:0; border-radius:var(--radius-sm);
+    background:var(--azul-800); color:#fff; font:inherit; font-weight:700; cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="titulo">Aprobar <span>Compas Outlet</span></div>
+  <nav>
+    <button id="tabPosts" aria-selected="true">Posts<span class="cuenta" id="nPosts">·</span></button>
+    <button id="tabSeg" aria-selected="false">Mensajes<span class="cuenta" id="nSeg">·</span></button>
+  </nav>
+</header>
+
+<main id="main">
+  <p class="mensaje">Cargando…</p>
+</main>
+
+<div class="brindis" id="brindis"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var GUARDA = "compas-aprobar-clave";
+  var main = document.getElementById("main");
+  var brindis = document.getElementById("brindis");
+  var vista = "posts";
+  var datos = { posts: [], seguimientos: [] };
+
+  /* La clave llega en el enlace. Se guarda en el telefono y se borra de la
+     barra de direcciones, para que no quede a la vista ni en el historial. */
+  function clave() {
+    var enUrl = new URLSearchParams(location.search).get("clave");
+    if (enUrl) {
+      try { localStorage.setItem(GUARDA, enUrl); } catch (e) {}
+      history.replaceState(null, "", location.pathname);
+      return enUrl;
+    }
+    try { return localStorage.getItem(GUARDA) || ""; } catch (e) { return ""; }
+  }
+
+  function avisar(texto) {
+    brindis.textContent = texto;
+    brindis.classList.add("visible");
+    clearTimeout(avisar.reloj);
+    avisar.reloj = setTimeout(function () { brindis.classList.remove("visible"); }, 2200);
+  }
+
+  function escapar(texto) {
+    var d = document.createElement("div");
+    d.textContent = texto == null ? "" : String(texto);
+    return d.innerHTML;
+  }
+
+  function claseVigencia(item) {
+    if (item.vencido) return "mala";
+    return /Último/.test(item.aviso || "") ? "hoy" : "ok";
+  }
+
+  /* ------------------------------------------------------------- Dibujar */
+
+  function tarjetaPost(p) {
+    var extras = "";
+    [["Historia", p.historia], ["Grupo de WhatsApp", p.grupo], ["TikTok", p.tiktok], ["Otros ganchos", p.otrosGanchos]]
+      .filter(function (par) { return par[1]; })
+      .forEach(function (par) {
+        extras += '<div class="extra"><h4>' + escapar(par[0]) + "</h4><p>" + escapar(par[1]) + "</p></div>";
+      });
+
+    return '' +
+      '<article class="tarjeta' + (p.vencido ? " vencida" : "") + '" data-tipo="post" data-fila="' + p.fila + '">' +
+        (p.foto ? '<img class="foto" src="' + escapar(p.foto) + '" alt="" loading="lazy">' : "") +
+        '<div class="cuerpo">' +
+          '<div class="fila-meta">' +
+            '<span class="etiqueta">' + escapar(p.formato || "Post") + "</span>" +
+            (p.aviso ? '<span class="etiqueta ' + claseVigencia(p) + '">' + escapar(p.aviso) + "</span>" : "") +
+          "</div>" +
+          '<p class="producto">' + escapar(p.producto) + "</p>" +
+          '<p class="precio">' + escapar(p.precio) + "</p>" +
+          '<p class="gancho">' + escapar(p.gancho) + "</p>" +
+          '<p class="texto">' + escapar(p.feed) + "</p>" +
+          (extras ? "<details><summary>Historia, grupo y TikTok</summary>" + extras + "</details>" : "") +
+        "</div>" +
+        '<button class="copiar" data-copiar="feed">Copiar el texto del post</button>' +
+        '<div class="botones">' +
+          (p.vencido
+            ? '<button class="accion no" data-decision="no">Descartar</button>'
+            : '<button class="accion no" data-decision="no">No va</button>' +
+              '<button class="accion si" data-decision="si">Aprobar</button>') +
+        "</div>" +
+      "</article>";
+  }
+
+  function tarjetaSeguimiento(s) {
+    return '' +
+      '<article class="tarjeta' + (s.vencido ? " vencida" : "") + '" data-tipo="seguimiento" data-fila="' + s.fila + '">' +
+        '<div class="cuerpo">' +
+          '<div class="fila-meta">' +
+            '<span class="etiqueta">' + escapar(s.tipo || "Seguimiento") + "</span>" +
+            (s.aviso ? '<span class="etiqueta ' + claseVigencia(s) + '">' + escapar(s.aviso) + "</span>" : "") +
+          "</div>" +
+          '<p class="producto">' + escapar(s.nombre || "Sin nombre") + "</p>" +
+          '<p class="precio">' + escapar(s.producto || "") + "</p>" +
+          '<p class="texto">' + escapar(s.mensaje) + "</p>" +
+          (s.enlace ? '<a class="wa" href="' + escapar(s.enlace) + '" target="_blank" rel="noopener">Abrir su WhatsApp →</a>' : "") +
+        "</div>" +
+        '<button class="copiar" data-copiar="mensaje">Copiar el mensaje</button>' +
+        '<div class="botones">' +
+          (s.vencido
+            ? '<button class="accion no" data-decision="no">Descartar</button>'
+            : '<button class="accion no" data-decision="no">No va</button>' +
+              '<button class="accion si" data-decision="si">Mandar</button>') +
+        "</div>" +
+      "</article>";
+  }
+
+  function dibujar() {
+    document.getElementById("nPosts").textContent = datos.posts.length;
+    document.getElementById("nSeg").textContent = datos.seguimientos.length;
+    document.getElementById("tabPosts").setAttribute("aria-selected", vista === "posts");
+    document.getElementById("tabSeg").setAttribute("aria-selected", vista === "seg");
+
+    var lista = vista === "posts" ? datos.posts : datos.seguimientos;
+    if (!lista.length) {
+      main.innerHTML = '<p class="mensaje"><strong>Todo al día</strong>' +
+        (vista === "posts" ? "No hay posts esperando." : "No hay mensajes esperando.") + "</p>";
+      return;
+    }
+
+    var html = "";
+    if (vista === "posts") {
+      html += '<p class="aviso">Instagram y Facebook todavía no están conectados, así que un post aprobado ' +
+              "queda <b>listo para copiar</b>. Tocá «Aprobar» y después «Copiar el texto» para pegarlo.</p>";
+      html += lista.map(tarjetaPost).join("");
+    } else {
+      html += '<p class="aviso">Un mensaje aprobado lo manda el sistema solo, entre 9 a. m. y 7 p. m.</p>';
+      html += lista.map(tarjetaSeguimiento).join("");
+    }
+    main.innerHTML = html;
+  }
+
+  /* -------------------------------------------------------------- Acciones */
+
+  function quitar(fila, tipo) {
+    var donde = tipo === "post" ? "posts" : "seguimientos";
+    datos[donde] = datos[donde].filter(function (x) { return x.fila !== fila; });
+  }
+
+  function buscar(fila, tipo) {
+    var donde = tipo === "post" ? "posts" : "seguimientos";
+    return datos[donde].filter(function (x) { return x.fila === fila; })[0];
+  }
+
+  main.addEventListener("click", function (evento) {
+    var tarjeta = evento.target.closest(".tarjeta");
+    if (!tarjeta) return;
+    var fila = Number(tarjeta.dataset.fila);
+    var tipo = tarjeta.dataset.tipo;
+
+    var copiar = evento.target.closest("[data-copiar]");
+    if (copiar) {
+      var item = buscar(fila, tipo);
+      var texto = item ? (tipo === "post" ? item.feed : item.mensaje) : "";
+      navigator.clipboard.writeText(texto).then(
+        function () { avisar("Texto copiado"); },
+        function () { avisar("No se pudo copiar"); }
+      );
+      return;
+    }
+
+    var boton = evento.target.closest("[data-decision]");
+    if (!boton) return;
+
+    var decision = boton.dataset.decision;
+    Array.prototype.forEach.call(tarjeta.querySelectorAll("button"), function (b) { b.disabled = true; });
+
+    fetch("/api/aprobar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clave: clave(), tipo: tipo, fila: fila, decision: decision }),
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        if (!res.ok) throw new Error(res.d && res.d.error ? res.d.error : "Falló");
+        tarjeta.classList.add("yendose");
+        setTimeout(function () { quitar(fila, tipo); dibujar(); }, 260);
+        avisar(decision === "si" ? "Aprobado ✅" : "Descartado");
+      })
+      .catch(function (error) {
+        Array.prototype.forEach.call(tarjeta.querySelectorAll("button"), function (b) { b.disabled = false; });
+        avisar(error.message || "No se pudo guardar");
+      });
+  });
+
+  document.getElementById("tabPosts").addEventListener("click", function () { vista = "posts"; dibujar(); });
+  document.getElementById("tabSeg").addEventListener("click", function () { vista = "seg"; dibujar(); });
+
+  /* ---------------------------------------------------------------- Cargar */
+
+  function pedirClave(motivo) {
+    main.innerHTML =
+      '<form class="clave" id="formClave">' +
+        '<p class="mensaje" style="padding:0 0 4px"><strong>' + escapar(motivo) + "</strong>" +
+        "Pegá acá la clave del enlace.</p>" +
+        '<input type="password" id="campoClave" autocomplete="off" placeholder="Clave">' +
+        "<button type=\"submit\">Entrar</button>" +
+      "</form>";
+    document.getElementById("formClave").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var valor = document.getElementById("campoClave").value.trim();
+      if (!valor) return;
+      try { localStorage.setItem(GUARDA, valor); } catch (err) {}
+      cargar();
+    });
+  }
+
+  function cargar() {
+    var llave = clave();
+    if (!llave) return pedirClave("Hace falta la clave");
+
+    main.innerHTML = '<p class="mensaje">Cargando…</p>';
+    fetch("/api/aprobar?clave=" + encodeURIComponent(llave))
+      .then(function (r) {
+        if (r.status === 401) {
+          try { localStorage.removeItem(GUARDA); } catch (e) {}
+          throw new Error("401");
+        }
+        if (!r.ok) throw new Error("servidor");
+        return r.json();
+      })
+      .then(function (d) {
+        datos = { posts: d.posts || [], seguimientos: d.seguimientos || [] };
+        dibujar();
+      })
+      .catch(function (error) {
+        if (error.message === "401") return pedirClave("La clave no sirve");
+        main.innerHTML = '<p class="mensaje"><strong>No se pudo cargar</strong>' +
+          "Revisá la señal y volvé a intentar.</p>";
+      });
+  }
+
+  cargar();
+  // Al volver a la pagina despues de un rato, se refresca sola.
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && datos.posts.length + datos.seguimientos.length === 0) cargar();
+  });
+})();
+</script>
+</body>
+</html>

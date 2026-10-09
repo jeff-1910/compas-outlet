@@ -3,3 +3,6 @@ Allow: /
 
 # El panel de administracion no tiene por que salir en Google
 Disallow: /admin.html
+
+# La pagina de aprobaciones es privada
+Disallow: /aprobar.html
