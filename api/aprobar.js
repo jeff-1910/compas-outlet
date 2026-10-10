@@ -72,6 +72,7 @@ async function armarArticulos() {
       descripcion: b.descripcion || "",
       categoria: b.categoria || "otros",
       cantidad: b.cantidad || 1,
+      precio: Number(b.precio) || 0,
       marca: b.marca || "",
       fotos: (Array.isArray(b.medios) ? b.medios : []).map((m) => m && m.url).filter(Boolean),
     }));

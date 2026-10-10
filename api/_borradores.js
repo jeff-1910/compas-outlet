@@ -86,7 +86,7 @@ export async function decidir(id, decision) {
       cuerpo: {
         nombre: borrador.nombre,
         categoria: borrador.categoria || "otros",
-        precio: 0,
+        precio: Math.max(0, Math.round(Number(borrador.precio) || 0)),
         precio_antes: 0,
         imagen: medios[0]?.url || "",
         medios,

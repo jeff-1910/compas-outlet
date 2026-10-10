@@ -215,6 +215,8 @@
       "</article>";
   }
 
+  function colones(n) { return "₡" + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+
   function tarjetaArticulo(a) {
     var fotos = a.fotos || [];
     return '' +
@@ -228,7 +230,7 @@
             '<span class="etiqueta">' + escapar(a.cantidad) + " pz</span>" +
           "</div>" +
           '<p class="producto">' + escapar(a.nombre) + "</p>" +
-          '<p class="nfotos">' + fotos.length + " foto(s)" + (fotos.length > 1 ? " · deslizá para verlas" : "") + " · sin precio («Consultar precio»)</p>" +
+          '<p class="nfotos">' + fotos.length + " foto(s)" + (fotos.length > 1 ? " · deslizá para verlas" : "") + " · " + (a.precio ? "precio " + colones(a.precio) : "sin precio («Consultar precio»)") + "</p>" +
           '<p class="texto">' + escapar(a.descripcion) + "</p>" +
         "</div>" +
         '<div class="botones">' +
@@ -278,7 +280,7 @@
 
     var html = "";
     if (vista === "articulos") {
-      html += '<p class="aviso">Un artículo aprobado <b>se publica en la tienda</b> en el momento, con todas sus fotos y sin precio. «No va» lo descarta y no vuelve a salir.</p>';
+      html += '<p class="aviso">Un artículo aprobado <b>se publica en la tienda</b> en el momento, con todas sus fotos y su precio (el 70% del de Target). «No va» lo descarta y no vuelve a salir.</p>';
       html += lista.map(tarjetaArticulo).join("");
     } else if (vista === "posts") {
       html += '<p class="aviso">Instagram y Facebook todavía no están conectados, así que un post aprobado ' +
