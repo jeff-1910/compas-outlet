@@ -77,5 +77,5 @@ const CONFIG = {
   locale: "es-ES",
 
   // --- Envios ---
-  notaEnvio: "Envío gratis en los alrededores de Heredia. Costo de envío en la GAM; fuera de la GAM, por encomienda. Te confirmamos el costo por WhatsApp.",
+  notaEnvio: "Envío gratis en Heredia y alrededores. A la GAM, ₡3.500. Fuera de la GAM, por encomienda.",
 };
