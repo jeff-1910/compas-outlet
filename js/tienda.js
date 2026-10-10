@@ -16,13 +16,15 @@
   // (colones sin decimales, dolares con dos).
   const precio = (n) => {
     const d = Number.isInteger(CONFIG.decimales) ? CONFIG.decimales : 2;
-    return (
-      CONFIG.simboloMoneda +
-      Number(n).toLocaleString(CONFIG.locale || "es", {
-        minimumFractionDigits: d,
-        maximumFractionDigits: d,
-      })
-    );
+    const texto = Number(n).toLocaleString(CONFIG.locale || "es", {
+      minimumFractionDigits: d,
+      maximumFractionDigits: d,
+    });
+    // El idioma "es-ES" no pone punto de miles en los de cuatro cifras
+    // (4900 en vez de 4.900), y en una tienda eso se ve como un error de
+    // precio. Aqui se lo ponemos nosotros.
+    const sep = CONFIG.locale === "es-ES" ? texto.replace(/^(\d)(\d{3})(?=\D|$)/, "$1.$2") : texto;
+    return CONFIG.simboloMoneda + sep;
   };
 
   // Un articulo con precio 0 se publica sin precio: se consulta por WhatsApp.
