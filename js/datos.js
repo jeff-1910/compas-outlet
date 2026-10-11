@@ -2,9 +2,10 @@
    Origen de los datos del catalogo.
 
    Si en config.js hay datos de Supabase, el catalogo se lee de ahi: es lo
-   que edita el panel desde cualquier lugar. Si no, o si falla la conexion,
-   se usa el catalogo local de productos.js para que la tienda nunca quede
-   en blanco.
+   que edita el panel desde cualquier lugar. Si NO hay datos de Supabase se
+   usa el catalogo local de productos.js. Si hay y la lectura falla, origen
+   queda en "error": la tienda no muestra el catalogo local (podria estar
+   desactualizado) y ofrece reintentar o consultar por WhatsApp.
    ========================================================================= */
 
 var CO_DATOS = (function () {
@@ -93,17 +94,19 @@ var CO_DATOS = (function () {
   async function cargar() {
     var sb = obtenerCliente();
     if (!sb) {
-      origen = "local";
-      return { origen: origen, motivo: "Supabase no configurado" };
+      // Sin configurar es normal (catalogo local). Configurado pero sin
+      // cliente es una falla: la libreria no cargo.
+      origen = configurado() ? "error" : "local";
+      return { origen: origen, motivo: configurado() ? "No cargo la libreria de Supabase" : "Supabase no configurado" };
     }
 
-    // Si el servidor no contesta en 6 segundos, nos quedamos con el
-    // catalogo local en vez de dejar al cliente esperando.
+    // Si el servidor no contesta en 10 segundos, se da por fallido para no
+    // dejar al cliente esperando; la tienda ofrece reintentar.
     function conLimite(promesa) {
       return Promise.race([
         promesa,
         new Promise(function (_, rechazar) {
-          setTimeout(function () { rechazar(new Error("El servidor tardo demasiado")); }, 6000);
+          setTimeout(function () { rechazar(new Error("El servidor tardo demasiado")); }, 10000);
         }),
       ]);
     }
@@ -131,9 +134,8 @@ var CO_DATOS = (function () {
       origen = "supabase";
       return { origen: origen, articulos: PRODUCTOS.length };
     } catch (e) {
-      console.warn("Compas Outlet: no se pudo leer el catalogo en linea. " +
-                   "Se muestra el catalogo guardado en la pagina.", e);
-      origen = "local";
+      console.warn("Compas Outlet: no se pudo leer el catalogo en linea.", e);
+      origen = "error";
       return { origen: origen, motivo: e.message || String(e) };
     }
   }

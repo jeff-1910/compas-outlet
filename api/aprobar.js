@@ -23,9 +23,12 @@ import {
   PESTANAS,
   celdaTexto,
   estaPendiente,
+  estaPorPublicar,
   leerPestana,
   marcarDecision,
+  marcarPublicadoPost,
   vigencia,
+  yaDecidido,
 } from "./_hoja.js";
 import { decidir, pendientes } from "./_borradores.js";
 
@@ -60,6 +63,85 @@ async function armarPosts(ahora) {
       foto: celdaTexto(valores, 12),
       ...vigencia(valores, ahora),
     }));
+}
+
+/** Posts aprobados que falta pegar en las redes. */
+async function armarPostsParaPublicar(ahora) {
+  const conf = PESTANAS.post;
+  const filas = await leerPestana(conf.pestana);
+  return filas
+    .filter(({ valores }) => estaPorPublicar(valores, conf))
+    .map(({ fila, valores }) => ({
+      fila,
+      fecha: celdaTexto(valores, 0),
+      producto: celdaTexto(valores, 3),
+      precio: celdaTexto(valores, 4),
+      formato: celdaTexto(valores, 5),
+      gancho: celdaTexto(valores, 6),
+      feed: celdaTexto(valores, 7),
+      historia: celdaTexto(valores, 8),
+      grupo: celdaTexto(valores, 9),
+      tiktok: celdaTexto(valores, 10),
+      foto: celdaTexto(valores, 12),
+      ...vigencia(valores, ahora),
+    }))
+    .filter((p) => !p.vencido)
+    .reverse();
+}
+
+/**
+ * Fichas de Marketplace listas para pegar. Se vuelve a mirar el catalogo: si
+ * el articulo ya no existe o se agoto, la ficha no se muestra; si cambio de
+ * precio, se avisa.
+ */
+async function armarMarketplace() {
+  const conf = PESTANAS.marketplace;
+  const filas = await leerPestana(conf.pestana).catch(() => []);
+  const listas = filas.filter(
+    ({ valores }) => celdaTexto(valores, conf.columnaEstado) === "LISTA PARA COPIAR" && !yaDecidido(valores[conf.columnaAprobar]),
+  );
+  if (!listas.length) return [];
+
+  const ids = [...new Set(listas.map(({ valores }) => Number(valores[2])).filter((n) => n > 0))];
+  const catalogo = new Map();
+  try {
+    const url = String(process.env.SUPABASE_URL || "").replace(/\/+$/, "");
+    const llave = String(process.env.SUPABASE_SERVICE_KEY || "");
+    const cab = { apikey: llave };
+    if (llave.startsWith("eyJ")) cab.Authorization = "Bearer " + llave;
+    const r = await fetch(url + "/rest/v1/productos?select=id,precio,stock,imagen,medios&id=in.(" + ids.join(",") + ")", { headers: cab });
+    if (r.ok) for (const p of await r.json()) catalogo.set(p.id, p);
+  } catch (error) {
+    console.error("[aprobar] marketplace/catalogo:", error);
+  }
+
+  return listas
+    .map(({ fila, valores }) => {
+      const id = Number(valores[2]);
+      const prod = catalogo.get(id);
+      const fotos = prod && Array.isArray(prod.medios) ? prod.medios.map((m) => m && m.url).filter(Boolean) : [];
+      if (!fotos.length && celdaTexto(valores, 10)) fotos.push(celdaTexto(valores, 10));
+      const precioHoy = prod ? Number(prod.precio) || 0 : 0;
+      const precioFicha = Number(String(valores[4] ?? "").replace(/\D/g, "")) || 0;
+      return {
+        fila,
+        id,
+        dia: celdaTexto(valores, 1),
+        titulo: celdaTexto(valores, 3),
+        precio: precioFicha,
+        precioHoy,
+        precioCambio: Boolean(prod) && precioHoy > 0 && precioHoy !== precioFicha,
+        categoriaFB: celdaTexto(valores, 5),
+        estado: celdaTexto(valores, 6),
+        descripcion: celdaTexto(valores, 7),
+        busquedas: celdaTexto(valores, 8),
+        ubicacion: celdaTexto(valores, 9),
+        fotos,
+        existe: Boolean(prod) && Number(prod.stock) > 0,
+      };
+    })
+    .filter((f) => f.existe || catalogo.size === 0)
+    .reverse();
 }
 
 /** Articulos nuevos esperando: fotos, nombre, area y cantidad. Si Supabase falla, la pagina sigue con lo demas. */
@@ -115,8 +197,10 @@ export default async function handler(peticion, respuesta) {
         return respuesta.status(401).json({ error: "Clave incorrecta." });
       }
       const ahora = new Date();
-      const [posts, seguimientos, articulos] = await Promise.all([armarPosts(ahora), armarSeguimientos(ahora), armarArticulos()]);
-      return respuesta.status(200).json({ posts, seguimientos, articulos, diasValido: DIAS_VALIDO });
+      const [posts, seguimientos, articulos, publicarPosts, publicarMkt] = await Promise.all([
+        armarPosts(ahora), armarSeguimientos(ahora), armarArticulos(), armarPostsParaPublicar(ahora), armarMarketplace(),
+      ]);
+      return respuesta.status(200).json({ posts, seguimientos, articulos, publicarPosts, publicarMkt, diasValido: DIAS_VALIDO });
     }
 
     if (peticion.method === "POST") {
@@ -131,6 +215,17 @@ export default async function handler(peticion, respuesta) {
         if (cuerpo.decision !== "si" && cuerpo.decision !== "no") throw new Error("Decision invalida");
         const resultado = await decidir(id, cuerpo.decision);
         return respuesta.status(200).json({ ok: true, decision: cuerpo.decision, yaDecidido: Boolean(resultado.yaDecidido) });
+      }
+      // Lo que se pega a mano: "si" = ya lo publique, "no" = no lo voy a publicar.
+      if (cuerpo.tipo === "pubpost") {
+        const fila = Number(cuerpo.fila);
+        if (cuerpo.decision === "si") await marcarPublicadoPost(fila);
+        else await marcarDecision("post", fila, "no");
+        return respuesta.status(200).json({ ok: true, decision: cuerpo.decision });
+      }
+      if (cuerpo.tipo === "pubmkt") {
+        const celda = await marcarDecision("marketplace", Number(cuerpo.fila), cuerpo.decision);
+        return respuesta.status(200).json({ ok: true, celda, decision: cuerpo.decision });
       }
       const celda = await marcarDecision(cuerpo.tipo, Number(cuerpo.fila), cuerpo.decision);
       return respuesta.status(200).json({ ok: true, celda, decision: cuerpo.decision });

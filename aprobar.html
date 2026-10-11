@@ -96,6 +96,19 @@
     border:1px solid var(--border); background:var(--surface-2); color:var(--text);
     border-radius:var(--radius-sm); font:inherit; font-weight:600; cursor:pointer;
   }
+  h2.seccion{font-size:1rem; margin:22px 2px 10px; display:flex; align-items:center; gap:8px}
+  h2.seccion:first-of-type{margin-top:4px}
+  .copias{display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 14px 12px}
+  .copias button{
+    border:1px solid var(--border); background:var(--surface-2); color:var(--text);
+    border-radius:var(--radius-sm); font:inherit; font-weight:600; font-size:.88rem;
+    padding:12px 6px; min-height:46px; cursor:pointer;
+  }
+  .copias button.ancho{grid-column:1/-1}
+  .copias button:active{background:var(--azul-100)}
+  .pista{font-size:.8rem; color:var(--text-muted); margin:0 14px 12px}
+  .dato{font-size:.84rem; color:var(--text-muted); margin:0 0 6px}
+  .dato b{color:var(--text)}
   button:disabled{opacity:.5; cursor:default}
   .mensaje{text-align:center; color:var(--text-muted); padding:48px 16px; font-size:.95rem}
   .mensaje strong{display:block; color:var(--text); font-size:1.05rem; margin-bottom:6px}
@@ -129,6 +142,7 @@
   <nav>
     <button id="tabArt" aria-selected="true">Artículos<span class="cuenta" id="nArt">·</span></button>
     <button id="tabPosts" aria-selected="false">Posts<span class="cuenta" id="nPosts">·</span></button>
+    <button id="tabPub" aria-selected="false">Publicar<span class="cuenta" id="nPub">·</span></button>
     <button id="tabSeg" aria-selected="false">Mensajes<span class="cuenta" id="nSeg">·</span></button>
   </nav>
 </header>
@@ -147,8 +161,8 @@
   var main = document.getElementById("main");
   var brindis = document.getElementById("brindis");
   var vista = "articulos";
-  var datos = { posts: [], seguimientos: [], articulos: [] };
-  var DONDE = { post: "posts", seguimiento: "seguimientos", articulo: "articulos" };
+  var datos = { posts: [], seguimientos: [], articulos: [], publicarPosts: [], publicarMkt: [] };
+  var DONDE = { post: "posts", seguimiento: "seguimientos", articulo: "articulos", pubpost: "publicarPosts", pubmkt: "publicarMkt" };
   var AREAS = { muebles: "Muebles", hogar: "Hogar", cocina: "Cocina", electronicos: "Electrónicos", ropa: "Ropa", calzado: "Calzado", otros: "Varios", herramientas: "Herramientas", jardin: "Jardín y exteriores", juguetes: "Juguetes", cama: "Ropa de cama" };
 
   /* La clave llega en el enlace. Se guarda en el telefono y se borra de la
@@ -263,7 +277,86 @@
       "</article>";
   }
 
+  /* Marketplace: la ficha ya viene escrita; aqui se copia pieza por pieza */
+  function tarjetaMarketplace(f) {
+    var fotos = f.fotos || [];
+    return '' +
+      '<article class="tarjeta" data-tipo="pubmkt" data-fila="' + f.fila + '">' +
+        (fotos.length
+          ? '<div class="galeria">' + fotos.map(function (u) { return '<img src="' + escapar(u) + '" alt="" loading="lazy">'; }).join("") + "</div>"
+          : "") +
+        '<div class="cuerpo">' +
+          '<div class="fila-meta"><span class="etiqueta">Marketplace</span>' +
+            (f.precioCambio ? '<span class="etiqueta mala">El precio cambió: ahora ' + colones(f.precioHoy) + "</span>" : "") +
+          "</div>" +
+          '<p class="producto">' + escapar(f.titulo) + "</p>" +
+          '<p class="dato"><b>' + colones(f.precio) + "</b> · " + fotos.length + " foto(s)" + (fotos.length > 1 ? " · deslizá para verlas" : "") + "</p>" +
+          '<p class="dato">Categoría: <b>' + escapar(f.categoriaFB || "elegila al pegar") + "</b></p>" +
+          '<p class="texto">' + escapar(f.descripcion) + "</p>" +
+        "</div>" +
+        '<div class="copias">' +
+          '<button data-copiar="titulo">Copiar título</button>' +
+          '<button data-copiar="precio">Copiar precio</button>' +
+          '<button class="ancho" data-copiar="descripcion">Copiar descripción</button>' +
+        "</div>" +
+        '<p class="pista">Fotos: mantené apretada una foto y elegí «Guardar imagen». Estado: el que de verdad tenga el artículo. Palabras de búsqueda: ' + escapar(f.busquedas) + "</p>" +
+        '<div class="botones">' +
+          '<button class="accion no" data-decision="no">No la publico</button>' +
+          '<button class="accion si" data-decision="si">Ya la publiqué</button>' +
+        "</div>" +
+      "</article>";
+  }
+
+  /* Posts aprobados: un boton de copiar por cada lugar donde se publica */
+  function tarjetaPublicarPost(p) {
+    var botones = '<button class="ancho" data-copiar="feed">Copiar para Facebook e Instagram</button>';
+    if (p.historia) botones += '<button data-copiar="historia">Copiar historia</button>';
+    if (p.grupo) botones += '<button data-copiar="grupo">Copiar grupo WhatsApp</button>';
+    if (p.tiktok) botones += '<button class="ancho" data-copiar="tiktok">Copiar guion de TikTok</button>';
+    return '' +
+      '<article class="tarjeta" data-tipo="pubpost" data-fila="' + p.fila + '">' +
+        (p.foto ? '<img class="foto" src="' + escapar(p.foto) + '" alt="" loading="lazy">' : "") +
+        '<div class="cuerpo">' +
+          '<div class="fila-meta"><span class="etiqueta">' + escapar(p.formato || "Post") + "</span>" +
+            (p.aviso ? '<span class="etiqueta ' + claseVigencia(p) + '">' + escapar(p.aviso) + "</span>" : "") + "</div>" +
+          '<p class="producto">' + escapar(p.producto) + "</p>" +
+          '<p class="precio">' + escapar(p.precio) + "</p>" +
+          '<p class="texto">' + escapar(p.feed) + "</p>" +
+        "</div>" +
+        '<div class="copias">' + botones + "</div>" +
+        '<p class="pista">Foto: mantené apretada la imagen y elegí «Guardar imagen» para subirla con el texto.</p>' +
+        '<div class="botones">' +
+          '<button class="accion no" data-decision="no">No lo publico</button>' +
+          '<button class="accion si" data-decision="si">Ya lo publiqué</button>' +
+        "</div>" +
+      "</article>";
+  }
+
+  function dibujarPublicar() {
+    var mk = datos.publicarMkt, ps = datos.publicarPosts;
+    if (!mk.length && !ps.length) {
+      main.innerHTML = '<p class="mensaje"><strong>Nada por publicar</strong>Aprobá un post o esperá las fichas de Marketplace de mañana.</p>';
+      return;
+    }
+    var html = '<p class="aviso">Aquí está todo lo que hay que <b>pegar a mano</b> en Facebook, Instagram, Marketplace y el grupo. ' +
+               "Tocá un botón de copiar, abrí la aplicación y pegá. Cuando lo publiques, tocá «Ya lo publiqué» y desaparece de la lista.</p>";
+    if (mk.length) html += '<h2 class="seccion">Marketplace <span class="etiqueta">' + mk.length + "</span></h2>" + mk.map(tarjetaMarketplace).join("");
+    if (ps.length) html += '<h2 class="seccion">Posts aprobados <span class="etiqueta">' + ps.length + "</span></h2>" + ps.map(tarjetaPublicarPost).join("");
+    main.innerHTML = html;
+  }
+
   function dibujar() {
+    document.getElementById("nPub").textContent = datos.publicarMkt.length + datos.publicarPosts.length;
+    document.getElementById("tabPub").setAttribute("aria-selected", vista === "pub");
+    if (vista === "pub") {
+      document.getElementById("nArt").textContent = datos.articulos.length;
+      document.getElementById("nPosts").textContent = datos.posts.length;
+      document.getElementById("nSeg").textContent = datos.seguimientos.length;
+      document.getElementById("tabArt").setAttribute("aria-selected", "false");
+      document.getElementById("tabPosts").setAttribute("aria-selected", "false");
+      document.getElementById("tabSeg").setAttribute("aria-selected", "false");
+      return dibujarPublicar();
+    }
     document.getElementById("nArt").textContent = datos.articulos.length;
     document.getElementById("tabArt").setAttribute("aria-selected", vista === "articulos");
     document.getElementById("nPosts").textContent = datos.posts.length;
@@ -314,9 +407,12 @@
     var copiar = evento.target.closest("[data-copiar]");
     if (copiar) {
       var item = buscar(fila, tipo);
-      var texto = item ? (tipo === "post" ? item.feed : item.mensaje) : "";
+      var campo = copiar.dataset.copiar;
+      // Los botones viejos dicen "feed" o "mensaje"; los nuevos nombran la pieza.
+      var texto = item ? (campo === "precio" ? String(item.precio || "") : (item[campo] || "")) : "";
+      var queCopio = { titulo: "Título copiado", precio: "Precio copiado", descripcion: "Descripción copiada", historia: "Historia copiada", grupo: "Texto del grupo copiado", tiktok: "Guion copiado" }[campo] || "Texto copiado";
       navigator.clipboard.writeText(texto).then(
-        function () { avisar("Texto copiado"); },
+        function () { avisar(queCopio); },
         function () { avisar("No se pudo copiar"); }
       );
       return;
@@ -338,7 +434,7 @@
         if (!res.ok) throw new Error(res.d && res.d.error ? res.d.error : "Falló");
         tarjeta.classList.add("yendose");
         setTimeout(function () { quitar(fila, tipo); dibujar(); }, 260);
-        avisar(decision === "si" ? (tipo === "articulo" ? "Publicado en la tienda ✅" : "Aprobado ✅") : "Descartado");
+        avisar(decision === "si" ? (tipo === "articulo" ? "Publicado en la tienda ✅" : (tipo === "pubmkt" || tipo === "pubpost") ? "Anotado como publicado ✅" : "Aprobado ✅") : "Descartado");
       })
       .catch(function (error) {
         Array.prototype.forEach.call(tarjeta.querySelectorAll("button"), function (b) { b.disabled = false; });
@@ -349,6 +445,7 @@
   document.getElementById("tabArt").addEventListener("click", function () { vista = "articulos"; dibujar(); });
   document.getElementById("tabPosts").addEventListener("click", function () { vista = "posts"; dibujar(); });
   document.getElementById("tabSeg").addEventListener("click", function () { vista = "seg"; dibujar(); });
+  document.getElementById("tabPub").addEventListener("click", function () { vista = "pub"; dibujar(); });
 
   /* ---------------------------------------------------------------- Cargar */
 
@@ -384,7 +481,7 @@
         return r.json();
       })
       .then(function (d) {
-        datos = { posts: d.posts || [], seguimientos: d.seguimientos || [], articulos: d.articulos || [] };
+        datos = { posts: d.posts || [], seguimientos: d.seguimientos || [], articulos: d.articulos || [], publicarPosts: d.publicarPosts || [], publicarMkt: d.publicarMkt || [] };
         dibujar();
       })
       .catch(function (error) {
@@ -397,7 +494,7 @@
   cargar();
   // Al volver a la pagina despues de un rato, se refresca sola.
   document.addEventListener("visibilitychange", function () {
-    if (!document.hidden && datos.posts.length + datos.seguimientos.length + datos.articulos.length === 0) cargar();
+    if (!document.hidden && datos.posts.length + datos.seguimientos.length + datos.articulos.length + datos.publicarMkt.length + datos.publicarPosts.length === 0) cargar();
   });
 })();
 </script>

@@ -88,6 +88,12 @@
   let soloOfertas = false;
   let visibles = 12;
 
+  // Estado del inventario: "cargando" mientras se lee de Supabase, "ok" si
+  // se confirmo (o si la tienda funciona solo con el catalogo local), y
+  // "error" si no se pudo confirmar. En "cargando" y "error" NO se muestran
+  // los articulos de ejemplo de productos.js: podrian estar desactualizados.
+  let estadoCatalogo = "ok";
+
   let carrito = leer("co_carrito", []);
   let productoAbierto = null;
   let cantidadModal = 1;
@@ -463,7 +469,56 @@
     );
   }
 
+  // Mensaje y botones cuando el inventario no esta confirmado.
+  function pintarEstadoCatalogo() {
+    const falla = estadoCatalogo === "error";
+    const carga = estadoCatalogo === "cargando";
+    const aviso = $("#avisoCatalogo");
+    aviso.classList.toggle("oculto", !falla);
+    aviso.innerHTML = falla
+      ? '<strong>No pudimos confirmar el inventario ahora mismo.</strong>' +
+        "<p>Para no mostrarte algo que quizás ya no está, no publicamos el catálogo hasta confirmarlo. " +
+        "Puedes reintentar o preguntarnos por WhatsApp qué hay disponible.</p>" +
+        '<div class="aviso-catalogo__botones">' +
+        '<button type="button" class="btn btn--primario" id="reintentarCatalogo">Reintentar</button>' +
+        '<a class="btn btn--wa" href="' + CO_DATOS.enlaceWa("Hola " + CONFIG.nombre + ", no me carga el catálogo. ¿Qué artículos tienen disponibles?") +
+        '" target="_blank" rel="noopener">Consultar por WhatsApp</a></div>'
+      : "";
+    aviso.setAttribute("role", "alert");
+    // Secciones que dependen del inventario: ocultas hasta confirmarlo.
+    const ok = estadoCatalogo === "ok";
+    ["#categorias-sec", "#espacios-sec"].forEach((s) => {
+      const el = $(s);
+      if (el) el.classList.toggle("oculto", !ok);
+    });
+    $(".filtros").classList.toggle("oculto", !ok);
+    $("#resumen").classList.toggle("oculto", !ok);
+    $("#seccionDestacados").classList.toggle("oculto", !ok || !PRODUCTOS.some((p) => p.destacado));
+    if (carga) {
+      $("#rejilla").innerHTML = '<div class="vacio" aria-live="polite"><span>⏳</span><h3>Cargando el catálogo…</h3></div>';
+      $("#verMas").classList.add("oculto");
+    } else if (falla) {
+      $("#rejilla").innerHTML = "";
+      $("#verMas").classList.add("oculto");
+    }
+    const btn = $("#reintentarCatalogo");
+    if (btn) btn.addEventListener("click", cargarCatalogo);
+    return ok;
+  }
+
+  function cargarCatalogo() {
+    estadoCatalogo = "cargando";
+    pintarEstadoCatalogo();
+    return CO_DATOS.cargar().then((r) => {
+      estadoCatalogo = r && r.origen === "supabase" ? "ok" : "error";
+      if (estadoCatalogo === "ok") repintar();
+      else pintarEstadoCatalogo();
+      abrirDesdeEnlace();
+    });
+  }
+
   function pintarCatalogo() {
+    if (!pintarEstadoCatalogo()) return;
     const lista = filtrar();
     const rejilla = $("#rejilla");
 
@@ -472,6 +527,16 @@
         ? "Sin resultados"
         : "Mostrando <strong>" + Math.min(visibles, lista.length) + "</strong> de <strong>" +
           lista.length + "</strong> " + (lista.length === 1 ? "articulo" : "articulos");
+
+    if (PRODUCTOS.length === 0) {
+      rejilla.innerHTML =
+        '<div class="vacio"><span>\u{1F4E6}</span><h3>Estamos actualizando el catálogo</h3>' +
+        "<p>Escríbenos por WhatsApp y te contamos qué hay disponible.</p>" +
+        '<a class="btn btn--wa" href="' + CO_DATOS.enlaceWa("Hola " + CONFIG.nombre + ", ¿qué artículos tienen disponibles?") +
+        '" target="_blank" rel="noopener">Escribir por WhatsApp</a></div>';
+      $("#verMas").classList.add("oculto");
+      return;
+    }
 
     if (lista.length === 0) {
       rejilla.innerHTML =
@@ -653,7 +718,8 @@
 
   function persistir() {
     // Descarta lineas de productos que ya no existen en el catalogo.
-    carrito = carrito.filter((l) => PRODUCTOS.some((p) => p.id === l.id));
+    // Solo con el inventario confirmado: si no cargo, no se borra el pedido.
+    if (estadoCatalogo === "ok") carrito = carrito.filter((l) => PRODUCTOS.some((p) => p.id === l.id));
     guardar("co_carrito", carrito);
     pintarCarrito();
   }
@@ -926,9 +992,13 @@
     iconosEstaticos();
     pintarDatosNegocio();
 
-    // Se dibuja YA con el catalogo que viene en la pagina. Asi la tienda
-    // nunca queda en blanco, ni siquiera si el panel en linea tarda o no
-    // responde.
+    // Con panel en linea, el inventario real es el de Supabase: no se
+    // dibujan los articulos de ejemplo de productos.js mientras tanto.
+    const enLinea = typeof CO_DATOS !== "undefined" && CO_DATOS.configurado();
+    if (enLinea) {
+      PRODUCTOS = [];
+      estadoCatalogo = "cargando";
+    }
     pintarCategorias();
     pintarDestacados();
     pintarCatalogo();
@@ -941,11 +1011,8 @@
     // Y si hay panel en linea, cuando lleguen sus datos se vuelve a dibujar.
     // El enlace directo se abre con el catalogo definitivo: los numeros de
     // articulo del catalogo local no son los de la base.
-    if (typeof CO_DATOS !== "undefined" && CO_DATOS.configurado()) {
-      CO_DATOS.cargar().then((r) => {
-        if (r && r.origen === "supabase") repintar();
-        abrirDesdeEnlace();
-      });
+    if (enLinea) {
+      cargarCatalogo();
     } else {
       abrirDesdeEnlace();
     }

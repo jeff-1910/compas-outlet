@@ -344,3 +344,60 @@ h1, h2, h3 { letter-spacing: -.02em; }
 @media (prefers-reduced-motion: reduce) {
   .mosaico__item img, .espacio, .tarjeta { transition: none; }
 }
+
+/* ------------------------------------------- Aviso de inventario sin confirmar */
+.aviso-catalogo {
+  background: var(--ambar-suave);
+  border: 1px solid var(--ambar);
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  color: #3d2a00;
+}
+.aviso-catalogo strong { display: block; font-size: 17px; margin-bottom: 4px; }
+.aviso-catalogo p { margin: 0 0 14px; font-size: 14.5px; }
+.aviso-catalogo__botones { display: flex; flex-wrap: wrap; gap: 10px; }
+.aviso-catalogo__botones .btn { min-height: 44px; }
+
+/* ------------------------------------------------------ Fotos de las tarjetas
+   Fondo calido parejo y foto completa, sin recortes. El "multiply" hace que
+   el fondo blanco de las fotos de catalogo se funda con la tarjeta. */
+.tarjeta__figura { background: var(--surface-2); }
+.tarjeta__figura img { padding: 6px; mix-blend-mode: multiply; }
+
+/* ------------------------------------------------------------ Mejoras en celular */
+@media (max-width: 780px) {
+  .btn-icono, .btn-wa-sup { width: 44px; height: 44px; }
+  .buscador-sup input, .buscador input { font-size: 16px; } /* evita el zoom de iOS */
+  .tira a { padding: 11px 15px; }
+
+  .portada__botones { flex-direction: column; }
+  .portada__botones .btn { width: 100%; justify-content: center; text-align: center; }
+
+  .filtros { padding: 12px; }
+  .filtros__fila { gap: 8px; }
+  .buscador { flex: 1 1 100%; }
+  .select { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 16px; }
+  .filtros__fila .chip { min-height: 44px; }
+
+  /* Categorias en una sola fila que se desliza, en vez de 4 filas apiladas */
+  .chips {
+    flex-wrap: nowrap; overflow-x: auto; margin-inline: -12px; padding: 2px 12px 6px;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: 0 0 auto; min-height: 44px; padding: 9px 16px; }
+
+  .pie { padding-bottom: 92px; } /* que el boton de WhatsApp no tape el pie */
+}
+@media (max-width: 460px) {
+  .rejilla { gap: 10px; }
+  .tarjeta { border-radius: 14px; }
+  .tarjeta__cuerpo { padding: 10px 10px 12px; }
+  .tarjeta__nombre { font-size: 14px; }
+  .precio { font-size: 18px; }
+  .btn-agregar { min-height: 44px; font-size: 14px; }
+  .insignia { font-size: 10.5px; padding: 3px 7px; }
+  .wa-flotante { width: 52px; height: 52px; }
+}
+.aviso-catalogo__botones .btn { flex: 1 1 150px; justify-content: center; text-align: center; }

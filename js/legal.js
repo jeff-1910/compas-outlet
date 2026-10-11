@@ -25,12 +25,12 @@ const CO_LEGAL = {
   // Cedula fisica o juridica. La ley del consumidor (7472) pide que el que
   // vende se pueda identificar. Sin esto, si un Compa reclama, el negocio
   // queda como "no identificado".
-  cedula: "4-0240-0603",
+  cedula: "",
 
   // Direccion fisica donde opera el negocio (provincia, canton, distrito y
   // una sena). No hace falta la casa exacta si vendes desde tu casa, pero
   // si al menos el canton.
-  direccion: "Heredia, San Francisco, Santa Cecilia, calle La Deportiva, 300 m sur de Taco Bell",
+  direccion: "Heredia",
   pais: "Costa Rica",
 
   /* ------------------------------------------------------- Contacto ----- */

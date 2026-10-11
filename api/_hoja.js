@@ -25,6 +25,8 @@ const ALCANCE = "https://www.googleapis.com/auth/spreadsheets";
 export const PESTANAS = {
   post: { pestana: "Posts", columnaAprobar: 13, columnaEstado: 14 },
   seguimiento: { pestana: "Seguimientos", columnaAprobar: 7, columnaEstado: 8 },
+  // Fichas de Marketplace: se pegan a mano; "si" en la columna M = ya la publique.
+  marketplace: { pestana: "Marketplace", columnaAprobar: 12, columnaEstado: 13 },
 };
 
 // El publicador no publica una aprobacion vieja: el catalogo de un outlet
@@ -78,9 +80,18 @@ export const yaAprobado = (valor) => /^s[ií]$/i.test(String(valor ?? "").trim()
 
 export const celdaTexto = (valores, i) => String(valores[i] ?? "").trim();
 
-/** Pendiente = el revisor lo dejo listo y nadie lo ha decidido todavia. */
+/** Ya tiene decision: "si" o "no". Un "no" tambien es una decision (antes solo se miraba el "si"). */
+export const yaDecidido = (valor) => /^(s[ií]|no)$/i.test(String(valor ?? "").trim());
+
+/** Pendiente = el revisor lo dejo listo y nadie lo ha decidido todavia (ni "si" ni "no"). */
 export function estaPendiente(valores, conf) {
-  return celdaTexto(valores, conf.columnaEstado) === "PENDIENTE" && !yaAprobado(valores[conf.columnaAprobar]);
+  return celdaTexto(valores, conf.columnaEstado) === "PENDIENTE" && !yaDecidido(valores[conf.columnaAprobar]);
+}
+
+/** Aprobado y todavia por publicar a mano (el publicador lo deja "LISTO PARA COPIAR"). */
+export function estaPorPublicar(valores, conf) {
+  const estado = celdaTexto(valores, conf.columnaEstado);
+  return yaAprobado(valores[conf.columnaAprobar]) && (estado === "LISTO PARA COPIAR" || estado === "PENDIENTE");
 }
 
 /* ------------------------------------------------------------ Hablar con Google */
@@ -157,6 +168,23 @@ export async function leerPestana(nombre) {
 export async function leerFila(nombre, fila) {
   const datos = await sheets("/values/" + encodeURIComponent(nombre + "!A" + fila + ":Z" + fila));
   return datos.values?.[0] || null;
+}
+
+/**
+ * Anota que un post aprobado ya se publico a mano. Solo si de verdad estaba
+ * aprobado: escribe la casilla de estado, nada mas.
+ */
+export async function marcarPublicadoPost(fila) {
+  const conf = PESTANAS.post;
+  if (!Number.isInteger(fila) || fila < 2 || fila > 100000) throw new Error("Fila invalida.");
+  const actual = await leerFila(conf.pestana, fila);
+  if (!actual || !yaAprobado(actual[conf.columnaAprobar])) throw new Error("Ese post no esta aprobado.");
+  const celda = conf.pestana + "!" + letra(conf.columnaEstado) + fila;
+  await sheets("/values/" + encodeURIComponent(celda) + "?valueInputOption=RAW", {
+    method: "PUT",
+    body: JSON.stringify({ values: [["PUBLICADO A MANO"]] }),
+  });
+  return celda;
 }
 
 /**
