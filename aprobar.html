@@ -295,11 +295,12 @@
           '<p class="texto">' + escapar(f.descripcion) + "</p>" +
         "</div>" +
         '<div class="copias">' +
+          (fotos.length ? '<button class="ancho" data-fotos="1">📷 Guardar las ' + fotos.length + " fotos de una vez</button>" : "") +
           '<button data-copiar="titulo">Copiar título</button>' +
           '<button data-copiar="precio">Copiar precio</button>' +
           '<button class="ancho" data-copiar="descripcion">Copiar descripción</button>' +
         "</div>" +
-        '<p class="pista">Fotos: mantené apretada una foto y elegí «Guardar imagen». Estado: el que de verdad tenga el artículo. Palabras de búsqueda: ' + escapar(f.busquedas) + "</p>" +
+        '<p class="pista">Fotos: tocá «Guardar las fotos de una vez» y elegí guardar en tu galería. Estado: el que de verdad tenga el artículo. Palabras de búsqueda: ' + escapar(f.busquedas) + "</p>" +
         '<div class="botones">' +
           '<button class="accion no" data-decision="no">No la publico</button>' +
           '<button class="accion si" data-decision="si">Ya la publiqué</button>' +
@@ -309,7 +310,8 @@
 
   /* Posts aprobados: un boton de copiar por cada lugar donde se publica */
   function tarjetaPublicarPost(p) {
-    var botones = '<button class="ancho" data-copiar="feed">Copiar para Facebook e Instagram</button>';
+    var botones = p.foto ? '<button class="ancho" data-fotos="1">📷 Guardar la foto</button>' : "";
+    botones += '<button class="ancho" data-copiar="feed">Copiar para Facebook e Instagram</button>';
     if (p.historia) botones += '<button data-copiar="historia">Copiar historia</button>';
     if (p.grupo) botones += '<button data-copiar="grupo">Copiar grupo WhatsApp</button>';
     if (p.tiktok) botones += '<button class="ancho" data-copiar="tiktok">Copiar guion de TikTok</button>';
@@ -324,7 +326,7 @@
           '<p class="texto">' + escapar(p.feed) + "</p>" +
         "</div>" +
         '<div class="copias">' + botones + "</div>" +
-        '<p class="pista">Foto: mantené apretada la imagen y elegí «Guardar imagen» para subirla con el texto.</p>' +
+        '<p class="pista">Tocá «Guardar la foto» y elegí guardar en tu galería para subirla con el texto.</p>' +
         '<div class="botones">' +
           '<button class="accion no" data-decision="no">No lo publico</button>' +
           '<button class="accion si" data-decision="si">Ya lo publiqué</button>' +
@@ -398,11 +400,70 @@
     return datos[donde].filter(function (x) { return (tipo === "articulo" ? x.id : x.fila) === fila; })[0];
   }
 
+  /* Fotos: se bajan todas juntas y se mandan al menu de compartir del telefono.
+     Ahi se elige "Guardar imagen(es)" (iPhone) o la galeria / Fotos (Android) y
+     quedan TODAS en la galeria con un solo toque, listas para subir a
+     Marketplace. En computadora se descargan una tras otra. */
+  var fotosListas = {};
+
+  function bajarFotos(clave, urls, nombre) {
+    if (fotosListas[clave]) return Promise.resolve(fotosListas[clave]);
+    return Promise.all(urls.map(function (u, i) {
+      return fetch(u).then(function (r) {
+        if (!r.ok) throw new Error("foto");
+        return r.blob();
+      }).then(function (b) {
+        var tipoImg = b.type && b.type.indexOf("image/") === 0 ? b.type : "image/jpeg";
+        var ext = tipoImg.split("/")[1].replace("jpeg", "jpg");
+        return new File([b], nombre + "-" + (i + 1) + "." + ext, { type: tipoImg });
+      });
+    })).then(function (files) { fotosListas[clave] = files; return files; });
+  }
+
+  function guardarFotos(boton, tipo, item) {
+    var urls = tipo === "pubmkt" ? (item.fotos || []) : (item.foto ? [item.foto] : []);
+    if (!urls.length) return avisar("Este artículo no tiene fotos");
+    var nombre = tipo === "pubmkt" ? "compas-" + item.id : "compas-post-" + item.fila;
+    var clave = tipo + item.fila;
+    var etiqueta = boton.textContent;
+    boton.disabled = true;
+    boton.textContent = "Preparando fotos…";
+    bajarFotos(clave, urls, nombre)
+      .then(function (files) {
+        if (navigator.canShare && navigator.canShare({ files: files })) {
+          return navigator.share({ files: files }).then(function () { avisar("Fotos listas ✅"); });
+        }
+        // Computadora: descarga una por una.
+        files.forEach(function (f, i) {
+          setTimeout(function () {
+            var a = document.createElement("a");
+            a.href = URL.createObjectURL(f);
+            a.download = f.name;
+            document.body.appendChild(a); a.click(); a.remove();
+          }, i * 350);
+        });
+        avisar("Descargando " + files.length + " foto(s)");
+      })
+      .catch(function (error) {
+        if (error && error.name === "AbortError") return; // cerro el menu de compartir
+        if (error && error.name === "NotAllowedError") return avisar("Tocá otra vez el botón");
+        avisar("No se pudieron bajar las fotos");
+      })
+      .then(function () { boton.disabled = false; boton.textContent = etiqueta; });
+  }
+
   main.addEventListener("click", function (evento) {
     var tarjeta = evento.target.closest(".tarjeta");
     if (!tarjeta) return;
     var fila = Number(tarjeta.dataset.fila);
     var tipo = tarjeta.dataset.tipo;
+
+    var botonFotos = evento.target.closest("[data-fotos]");
+    if (botonFotos) {
+      var dato = buscar(fila, tipo);
+      if (dato) guardarFotos(botonFotos, tipo, dato);
+      return;
+    }
 
     var copiar = evento.target.closest("[data-copiar]");
     if (copiar) {
