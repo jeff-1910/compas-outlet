@@ -378,8 +378,8 @@
       html += '<p class="aviso">Un artículo aprobado <b>se publica en la tienda</b> en el momento, con todas sus fotos y su precio (el 70% del de Target). «No va» lo descarta y no vuelve a salir.</p>';
       html += lista.map(tarjetaArticulo).join("");
     } else if (vista === "posts") {
-      html += '<p class="aviso">Instagram y Facebook todavía no están conectados, así que un post aprobado ' +
-              "queda <b>listo para copiar</b>. Tocá «Aprobar» y después «Copiar el texto» para pegarlo.</p>";
+      html += '<p class="aviso">Un post aprobado <b>se publica solo en Facebook e Instagram</b> en unas horas (el sistema revisa varias veces al día). ' +
+              "Para el grupo de WhatsApp y TikTok, usá la pestaña <b>Publicar</b>.</p>";
       html += lista.map(tarjetaPost).join("");
     } else {
       html += '<p class="aviso">Un mensaje aprobado lo manda el sistema solo, entre 9 a. m. y 7 p. m.</p>';
