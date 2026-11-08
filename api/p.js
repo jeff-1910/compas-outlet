@@ -78,6 +78,64 @@ function pagina({ titulo, descripcion, imagen, url, destino }) {
 </html>`;
 }
 
+import { WHATSAPP, documento, jsonLd } from "./_seo.js";
+
+function fichaProducto(p, id) {
+  const url = `${TIENDA}/p/${id}`;
+  const agotado = Number(p.stock) <= 0;
+  const conPrecio = Number(p.precio) > 0;
+  const wa = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(
+    `Hola, me interesa: ${p.nombre}${conPrecio ? " (" + precio(p.precio) + ")" : ""}. ${url}`
+  )}`;
+
+  const datos = jsonLd({
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: p.nombre,
+    description: p.descripcion || p.nombre,
+    url,
+    ...(p.imagen ? { image: [p.imagen] } : {}),
+    ...(conPrecio
+      ? {
+          offers: {
+            "@type": "Offer",
+            url,
+            priceCurrency: "CRC",
+            price: Number(p.precio),
+            availability: agotado ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+            seller: { "@type": "Organization", name: "Compas Outlet" },
+          },
+        }
+      : {}),
+  });
+
+  const cuerpo = `
+<nav class="mig" aria-label="Ruta"><a href="/">Inicio</a>${
+    p.categoria ? ` › <a href="/categoria/${escapar(p.categoria)}">Ver más de esta categoría</a>` : ""
+  }</nav>
+<div class="ficha">
+  <div>${p.imagen ? `<img src="${escapar(p.imagen)}" alt="${escapar(p.nombre)}" width="800" height="800">` : ""}</div>
+  <div>
+    <h1>${escapar(p.nombre)}</h1>
+    <div class="pr">${conPrecio ? precio(p.precio) : "Consulta el precio por WhatsApp"}</div>
+    ${p.descripcion ? `<p class="intro">${escapar(p.descripcion)}</p>` : ""}
+    <p>${agotado ? "<strong>Agotado</strong>" : Number(p.stock) === 1 ? "<strong>Queda 1</strong>" : "Disponible"} ·
+    Garantía de 30 días · Envío gratis en Heredia y alrededores</p>
+    <a class="btn wa" href="${escapar(wa)}" rel="noopener">Pedir por WhatsApp</a>
+    <a class="btn az" href="/#p=${escapar(id)}">Ver en la tienda</a>
+  </div>
+</div>`;
+
+  return documento({
+    titulo: `${p.nombre} · Compas Outlet`,
+    descripcion: resumen(p),
+    url,
+    imagen: p.imagen || IMAGEN_TIENDA,
+    extra: datos,
+    cuerpo,
+  });
+}
+
 export default async function handler(req, res) {
   const id = String(req.query.id || "");
   if (!/^[0-9]{1,12}$/.test(id)) {
@@ -99,13 +157,10 @@ export default async function handler(req, res) {
   let cache = "public, s-maxage=300, stale-while-revalidate=86400";
 
   if (p) {
-    html = pagina({
-      titulo: `${p.nombre} · Compas Outlet`,
-      descripcion: resumen(p),
-      imagen: p.imagen || IMAGEN_TIENDA,
-      url: `${TIENDA}/p/${id}`,
-      destino: `/#p=${id}`,
-    });
+    // Pagina real del articulo (con texto, foto, precio y datos para Google),
+    // en vez de la pagina que saltaba enseguida a la tienda: Google no podia
+    // indexar un articulo cuya direccion lo mandaba a la portada.
+    html = fichaProducto(p, id);
   } else if (fallo) {
     // Supabase no contesto: tarjeta general, pero la persona igual llega a la
     // ficha. Poco cache, para que la vista previa buena aparezca pronto.

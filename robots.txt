@@ -1,8 +1,12 @@
 User-agent: *
 Allow: /
 
-# El panel de administracion no tiene por que salir en Google
+# Paginas privadas del equipo: no tienen por que salir en Google
 Disallow: /admin.html
-
-# La pagina de aprobaciones es privada
 Disallow: /aprobar.html
+Disallow: /panel.html
+Disallow: /api/
+
+# Los bots de Google, Bing, WhatsApp y redes SI pueden entrar a todo lo demas
+# (no hay ningun bot bloqueado). Este es el mapa de la tienda; se actualiza solo.
+Sitemap: https://compas-outlet.vercel.app/sitemap.xml

@@ -3,14 +3,36 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Compas Outlet | No son clientes, son nuestros Compas</title>
-<meta name="description" content="Compas Outlet: muebles, hogar, cocina y electrónicos a precio de outlet en Costa Rica. Garantía de 30 días, envío gratis en Heredia y alrededores y pedidos por WhatsApp.">
+<title>Compas Outlet | Muebles y hogar a precio de outlet en Costa Rica</title>
+<meta name="description" content="Outlet en Heredia, Costa Rica: muebles, ropa de cama, colchones, artículos para el hogar, jardín y electrónicos a precio de outlet. Garantía de 30 días, envío gratis en Heredia y pedidos por WhatsApp.">
+<!-- Datos para Google: quien es el negocio, donde esta y como contactarlo. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Store",
+  "name": "Compas Outlet",
+  "alternateName": "No son clientes, son nuestros Compas",
+  "url": "https://compas-outlet.vercel.app/",
+  "logo": "https://compas-outlet.vercel.app/img/logo.jpg",
+  "image": "https://compas-outlet.vercel.app/img/compartir.jpg",
+  "description": "Outlet de muebles, ropa de cama, colchones, artículos para el hogar, jardín y electrónicos en Heredia, Costa Rica. Garantía de 30 días y pedidos por WhatsApp.",
+  "telephone": "+50670090544",
+  "email": "compasoutlet@gmail.com",
+  "address": { "@type": "PostalAddress", "addressLocality": "Heredia", "addressCountry": "CR" },
+  "areaServed": { "@type": "Country", "name": "Costa Rica" },
+  "currenciesAccepted": "CRC",
+  "sameAs": [
+    "https://instagram.com/compasoutlet",
+    "https://www.facebook.com/share/1BqqDjbWfL/"
+  ]
+}
+</script>
 <!-- Lo que muestran WhatsApp, Facebook e Instagram al pegar el link de la tienda.
      La imagen va con direccion completa: las redes no entienden rutas relativas. -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Compas Outlet">
-<meta property="og:title" content="Compas Outlet | No son clientes, son nuestros Compas">
-<meta property="og:description" content="Muebles, hogar, cocina y electrónicos a precio de outlet en Costa Rica. Garantía de 30 días y pedidos por WhatsApp.">
+<meta property="og:title" content="Compas Outlet | Muebles y hogar a precio de outlet en Costa Rica">
+<meta property="og:description" content="Muebles, ropa de cama, hogar y electrónicos a precio de outlet en Costa Rica. Garantía de 30 días y pedidos por WhatsApp.">
 <meta property="og:url" content="https://compas-outlet.vercel.app/">
 <meta property="og:image" content="https://compas-outlet.vercel.app/img/compartir.jpg">
 <meta property="og:image:type" content="image/jpeg">
@@ -88,7 +110,7 @@
 <section class="portada" id="inicio">
   <div class="contenedor portada__rejilla">
     <div>
-      <span class="portada__etiqueta">Outlet de artículos para tu hogar</span>
+      <span class="portada__etiqueta">Outlet de muebles y artículos para tu hogar en Costa Rica</span>
       <h1>Lo que tu casa necesita, <em>a precio de outlet</em></h1>
       <p class="portada__texto">
         Muebles, hogar, cocina, electrónicos y más. Lotes limitados: lo que ves
@@ -324,6 +346,15 @@
 <footer class="pie">
   <div class="contenedor">
 
+    <!-- Enlaces normales (no JavaScript) a cada categoria: asi Google las encuentra -->
+    <nav class="pie__legal" aria-label="Categorías de la tienda">
+      <a href="/categoria/muebles">Muebles outlet</a>
+      <a href="/categoria/cama">Ropa de cama y colchones</a>
+      <a href="/categoria/hogar">Artículos para el hogar</a>
+      <a href="/categoria/jardin">Jardín y exteriores</a>
+      <a href="/categoria/electronicos">Electrónicos</a>
+      <a href="/categoria/juguetes">Juguetes</a>
+    </nav>
     <nav class="pie__legal" aria-label="Información legal">
       <a href="terminos.html">Términos y condiciones</a>
       <a href="privacidad.html">Política de privacidad</a>
@@ -541,5 +572,8 @@
   document.addEventListener("DOMContentLoaded", function () { setTimeout(todo, 0); });
 })();
 </script>
+<!-- Cuenta visitas sin cookies ni datos personales (Vercel Web Analytics).
+     Solo funciona cuando se activa en el panel de Vercel; mientras tanto no hace nada. -->
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
