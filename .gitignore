@@ -12,3 +12,6 @@ js/productos-anterior.js
 
 .vercel
 .env*
+
+# Dependencias
+node_modules/

@@ -5,6 +5,11 @@
   "description": "Tienda de articulos varios Compas Outlet, con asistente de ventas",
   "type": "module",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.124.0"
+    "@anthropic-ai/sdk": "^0.124.0",
+    "@remotion/cli": "^4.0.542",
+    "@remotion/player": "^4.0.542",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "remotion": "^4.0.542"
   }
 }
